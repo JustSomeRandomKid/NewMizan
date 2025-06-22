@@ -23,7 +23,7 @@ This mobile application enables users to report unresolved crimes, track case st
    npm install
 4. Run the app on an emulator or device:
    ```sh
-    npx expo start -c  
+    npx expo start  
    ```
 
 ## Features
@@ -42,10 +42,12 @@ This mobile application enables users to report unresolved crimes, track case st
 - **Chat Support**: Direct assistance from legal advisors.
 
 ## Developer Credits & Contributions
-- **Elianna Kulak** - Lead Developer
-- email: eliannabeatle@gmail.com
+- **Matan Botner** - Lead Developer
+- **Elianna Kulak** - Developer
+- **Rotem Rechter** - Developer
+- all of the rest of our amazing team memebers
 
 ## Contact
 For any questions or contributions, reach out via GitHub or email.
-
+mizan.meet8@gmail.com
 ---
