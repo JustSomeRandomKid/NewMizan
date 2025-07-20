@@ -1,5 +1,5 @@
-import { Client, Databases, Account, ID } from "react-native-appwrite";
 import { Platform } from "react-native";
+import { Account, Client, Databases, ID } from "react-native-appwrite";
 
 const config = {
     endpoint: 'https://cloud.appwrite.io/v1',
@@ -18,10 +18,15 @@ switch (Platform.OS) {
     case "ios":
         client.setPlatform("com.mizan.meet");
         break;
+
+    case "android":
+        client.setPlatform("com.mizanandroid.meet");
+        break;
 }
 
 // 🔥 Add Account Initialization
 const account = new Account(client);
 const database = new Databases(client);
 
-export { database, config, client, account, ID }; // 🔥 Export account and ID
+export { account, client, config, database, ID }; // 🔥 Export account and ID
+
