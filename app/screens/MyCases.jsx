@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { account, config, database } from '../../lib/appwrite'; // Import the account module
+import { account, database } from '../../lib/appwrite'; // Import the account module
 import BadgeComponent from '../components/Badge'; // Custom Badge component
 import CardComponent from '../components/Card'; // Assuming CardComponent is in 'components' folder
 
@@ -28,7 +28,7 @@ const Cases = () => {
   // Fetch the list of cases associated with the given user ID
   const fetchCases = async (userId) => {
     try {
-      const { documents } = await database.listDocuments(config.db, config.col.crimes); // Retrieve crime cases
+      const { documents } = await database.listDocuments(process.env.EXPO_PUBLIC_APPWRITE_DB, process.env.EXPO_PUBLIC_APPWRITE_CRIMES); // Retrieve crime cases
       const filteredCases = documents.filter(doc => doc.victimID === userId); // Filter by victim ID
       const formattedCases = filteredCases.map(doc => ({
         id: doc.$id,
