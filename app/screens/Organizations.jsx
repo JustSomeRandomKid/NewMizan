@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
-import { View, Animated, FlatList, Text, Dimensions, TouchableOpacity, Modal, StyleSheet, Image } from 'react-native';
-import CardComponent from '../components/OrganizationCard';
+import { useRef, useState } from 'react';
+import {
+  Animated,
+  Dimensions,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-// Get screen width for responsive design
 const { width } = Dimensions.get('window');
 
-// Example data for organizations
 const organizations = [
   {
     id: '1',
@@ -13,6 +19,7 @@ const organizations = [
     image: require('../../assets/images/Figma/Rectangle (2).png'),
     logo: require('../../assets/images/Figma/Rectangle (5).png'),
     description: 'whatsapp: +972 053-924-052',
+    summary: 'Mosawa is awesome',
   },
   {
     id: '2',
@@ -20,6 +27,7 @@ const organizations = [
     image: require('../../assets/images/Figma/Rectangle (3).png'),
     logo: require('../../assets/images/Figma/Rectangle (6).png'),
     description: 'whatsapp: +972 053-924-052',
+    summary: 'Sikuy doesn’t suck',
   },
   {
     id: '3',
@@ -27,48 +35,45 @@ const organizations = [
     image: require('../../assets/images/Figma/Rectangle (4).png'),
     logo: require('../../assets/images/Figma/Rectangle (7).png'),
     description: 'whatsapp: +972 053-924-052',
+    summary: 'Zazim is amazing',
   },
 ];
 
-// Create an animated version of FlatList for smooth scrolling
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
-
 const OrganizationCarouselPage = () => {
-  // State to track the active card index and selected organization for modal
-  const [activeIndex, setActiveIndex] = useState(0);
+  const scrollX = useRef(new Animated.Value(0)).current;
   const [selectedOrg, setSelectedOrg] = useState(null);
+  const flatListRef = useRef(null);
 
-  // Animated value for smooth scrolling and scaling
-  const scrollX = new Animated.Value(0);
-
-  // Handle the "Chat" button press and show the modal with the organization's details
-  const handleChatPress = (org) => {
-    setSelectedOrg(org); // Set the selected organization for the modal
+  const handleDotPress = (index) => {
+    flatListRef.current?.scrollToOffset({ offset: index * width, animated: true });
   };
 
   return (
     <View style={styles.container}>
-      {/* Title Box with main and subtitle */}
-      <View style={styles.titleBox}>
+      {/* Title Section */}
         <Text style={styles.mainTitle}>Follow-Up Assistance</Text>
-        <Text style={styles.subTitle}>Feeling as though it's not moving forward?{"\n"}Need help with your report?</Text>
-      </View>
+   
 
-      {/* Animated FlatList displaying organizations */}
-      <AnimatedFlatList
+      {/* Carousel Section */}
+      <Animated.FlatList
+        ref={flatListRef}
         data={organizations}
         horizontal
         pagingEnabled
+        showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.flatListContent}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
         renderItem={({ item, index }) => {
-          // Interpolating scroll position for card scaling effect
           const inputRange = [
             (index - 1) * width,
             index * width,
             (index + 1) * width,
           ];
-
-          // Interpolating scale based on scroll position for a zoom effect
           const scale = scrollX.interpolate({
             inputRange,
             outputRange: [0.9, 1, 0.9],
@@ -77,53 +82,66 @@ const OrganizationCarouselPage = () => {
 
           return (
             <Animated.View style={[styles.cardWrapper, { transform: [{ scale }] }]}>
-              {/* Custom CardComponent for organization details */}
-              <CardComponent title={item.name} description={item.description} image={item.image} />
 
-              {/* Chat Button to trigger modal */}
-              <TouchableOpacity style={styles.chatButton} onPress={() => handleChatPress(item)}>
+              <Image source={item.image} style={styles.cardImage} />
+
+              <Text style={styles.summary}>{item.summary}</Text>
+
+              <TouchableOpacity
+                style={styles.chatButton}
+                onPress={() => setSelectedOrg(item)}
+                activeOpacity={0.8}
+              >
                 <Text style={styles.chatButtonText}>Chat</Text>
               </TouchableOpacity>
             </Animated.View>
           );
         }}
-        showsHorizontalScrollIndicator={false} // Hide scroll indicators
-        onMomentumScrollEnd={(e) => {
-          // Update active index based on scroll position
-          const contentOffsetX = e.nativeEvent.contentOffset.x;
-          setActiveIndex(Math.floor(contentOffsetX / width));
-        }}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: true }
-        )}
       />
 
-      {/* Indicator Dots to show active card */}
+      {/* Pagination Dots */}
       <View style={styles.indicatorContainer}>
-        {organizations.map((_, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => setActiveIndex(index)} // Set active index on dot press
-            style={[styles.indicator, index === activeIndex && styles.activeIndicator]} // Highlight active dot
-          />
-        ))}
+        {organizations.map((_, index) => {
+          const opacity = scrollX.interpolate({
+            inputRange: [
+              (index - 1) * width,
+              index * width,
+              (index + 1) * width,
+            ],
+            outputRange: [0.3, 1, 0.3],
+            extrapolate: 'clamp',
+          });
+          return (
+            <TouchableOpacity
+              key={index}
+              onPress={() => handleDotPress(index)}
+              activeOpacity={0.8}
+              style={styles.indicatorTouchable}
+            >
+              <Animated.View style={[styles.indicator, { opacity }]} />
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      {/* Modal to show selected organization details */}
+      {/* Modal for Selected Organization */}
       {selectedOrg && (
-        <Modal animationType="slide" transparent={true} visible={!!selectedOrg}>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={!!selectedOrg}
+          onRequestClose={() => setSelectedOrg(null)}
+        >
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              {/* Display Organization's logo */}
-              <Image source={selectedOrg.logo} style={styles.logo} />
-
-              {/* Organization Info */}
+              <Image source={selectedOrg.logo} style={styles.logoSmall} />
               <Text style={styles.modalTitle}>{selectedOrg.name}</Text>
               <Text style={styles.modalDescription}>{selectedOrg.description}</Text>
-
-              {/* Close Button for modal */}
-              <TouchableOpacity style={styles.closeButton} onPress={() => setSelectedOrg(null)}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setSelectedOrg(null)}
+                activeOpacity={0.8}
+              >
                 <Text style={styles.closeButtonText}>Close</Text>
               </TouchableOpacity>
             </View>
@@ -134,118 +152,165 @@ const OrganizationCarouselPage = () => {
   );
 };
 
-// Styles for the components
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', marginTop: 20 },
-
-  // Title Box Styles
+  container: {
+    flex: 1,
+    backgroundColor: '#04445E', // Light blue background
+    paddingTop: 40,
+    alignItems: 'center',
+  },
   titleBox: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
     marginBottom: 30,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 10,
-    width: width - 40,
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    backgroundColor: '#04445E', // Deep blue
+    borderRadius: 12,
+    width: '90%',
   },
   mainTitle: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#04445E',
+    fontSize: 32,
+    fontWeight: '700',
+    color: 'Black', // Bright yellow
     textAlign: 'center',
+    letterSpacing: 1,
   },
-  subTitle: {
-    fontSize: 16,
-    color: '#04445E',
-    textAlign: 'center',
-    marginTop: 10,
+  flatListContent: {
+    alignItems: 'center',
+    paddingHorizontal: 10,
   },
-
-  // Card Wrapper Styles for each organization
   cardWrapper: {
-    width: width - 60,
-    marginHorizontal: 20,
+    width: width - 40,
+    height:400,
+    marginHorizontal: 10,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 8,
   },
-  indicatorContainer: {
+  cardHeader: {
     flexDirection: 'row',
-    marginTop: 20,
-  },
-  indicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#ccc',
-    margin: 5,
-  },
-  activeIndicator: {
-    backgroundColor: '#FFD700',
-  },
-
-  // Chat Button Styling
-  chatButton: {
-    backgroundColor: '#04445E',
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: 30,
-    marginTop: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 5,
+    marginBottom: 15,
+    width: '100%',
   },
-  chatButtonText: {
-    fontSize: 18,
-    color: '#FFDE59',
-    fontWeight: 'bold',
+  logoSmall: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    resizeMode: 'contain',
+    marginRight: 15,
+    backgroundColor: '#F0F0F0',
   },
-
-  // Modal Styling
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    width: width - 60,
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  logo: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginBottom: 10,
-  },
-  modalTitle: {
+  cardTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: '#04445E',
+    flexShrink: 1,
+  },
+  cardImage: {
+    width: 200,
+    height: 175,
+    borderRadius: 16,
+    resizeMode: 'cover',
+  },
+  summary: {
+    fontWeight: '600',
+    fontSize: 18,
     color: '#04445E',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  modalDescription: {
+  description: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
     marginBottom: 20,
+    lineHeight: 22,
+  },
+  chatButton: {
+    marginTop: 20,
+    backgroundColor: '#FFDE59', // Yellow button
+    paddingVertical: 14,
+    paddingHorizontal: 50,
+    borderRadius: 30,
+    shadowColor: '#FFDE59',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  chatButtonText: {
+    fontSize: 18,
+    color: '#04445E', // Blue text
+    fontWeight: 'bold',
+    letterSpacing: 0.7,
+  },
+  indicatorContainer: {
+    flexDirection: 'row',
+    marginTop: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  indicatorTouchable: {
+    padding: 8,
+  },
+  indicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#FFDE59', // Yellow dots
+    marginHorizontal: 8,
+    borderWidth: 2,
+    borderColor: '#04445E', // Blue border
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(4, 68, 94, 0.85)', // Dark translucent blue overlay
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    width: width - 60,
+    backgroundColor: '#FFFFFF',
+    padding: 30,
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#04445E',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  modalDescription: {
+    fontSize: 18,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 26,
   },
   closeButton: {
-    backgroundColor: '#FFDE59',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    borderRadius: 20,
-    marginTop: 10,
+    backgroundColor: '#04445E',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 30,
   },
   closeButtonText: {
     fontSize: 18,
-    color: '#04445E',
+    color: '#FFDE59',
     fontWeight: 'bold',
+    letterSpacing: 0.7,
   },
 });
 

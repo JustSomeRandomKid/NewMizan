@@ -1,7 +1,6 @@
-import React from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
-import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { Controller, useForm } from "react-hook-form";
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import * as yup from "yup";
 import { account } from "../../lib/appwrite"; // Import account module for authentication
 
@@ -49,6 +48,7 @@ const LoginScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Image source={require("../../assets/images/Figma/Rectangle (1).png")} style={styles.logo} />
+      <View style={styles.separator} />
       <Text style={styles.title}>Login</Text>
       
       {/* Email input field */}
@@ -89,22 +89,31 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#04445F",
     padding: 20,
   },
   logo: {
-    width: 250,
-    height: 100,
+    width: 500,
+    height: 200,
     resizeMode: "contain",
-    marginBottom: 20,
+    transform: [{ translateY: -75 }]
   },
   title: {
+    transform: [{ translateY: -120 }],
     fontSize: 28,
     fontWeight: "bold",
-    color: "#1C2120",
+    color: "#FFFFFF",
     marginBottom: 20,
   },
+    separator: {
+  transform: [{ translateY: -125 }],
+  width: "95%",        
+  height: 4,            
+  backgroundColor: "#EEBA2B", 
+  marginVertical: 20,   
+},
   input: {
+    transform: [{ translateY: -120 }],
     width: "100%",
     height: 50,
     backgroundColor: "#F0F0F0",
@@ -115,9 +124,10 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   button: {
+    transform: [{ translateY: -120 }],
     width: "100%",
     height: 50,
-    backgroundColor: "#04445F",
+    backgroundColor: "#EEBA2B",
     borderRadius: 6,
     justifyContent: "center",
     alignItems: "center",
@@ -131,7 +141,7 @@ const styles = StyleSheet.create({
   signupText: {
     marginTop: 20,
     fontSize: 16,
-    color: "#1C2120",
+    color: "#FFFFFF",
   },
   error: {
     color: "red",
