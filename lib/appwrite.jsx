@@ -1,10 +1,9 @@
 import { Platform } from "react-native";
 import { Account, Client, Databases, ID } from "react-native-appwrite";
-
 const config = {
-    endpoint: 'https://cloud.appwrite.io/v1',
-    projectId: '67b0d5fa002f51d03429',
-    db: '67b0d857001943222279',
+    endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
+    projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECTID,
+    db: process.env.EXPO_PUBLIC_APPWRITE_DB,
     col: {
         crimes: '67b244920031b07b662d',
     },
