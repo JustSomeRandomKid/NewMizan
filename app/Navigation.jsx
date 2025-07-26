@@ -1,8 +1,8 @@
-import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import SignupScreen from './screens/Signup';
-import LoginScreen from './screens/Login';
 import MainContainer from './MainContainer'; // Import the tab navigator
+import LoginScreen from './screens/Login';
+import messenger from './screens/Messenger';
+import SignupScreen from './screens/Signup';
 
 const Stack = createNativeStackNavigator();
 
@@ -12,6 +12,7 @@ const Navigation = () => {
       <Stack.Screen name="Signup" component={SignupScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Main" component={MainContainer} options={{ headerShown: false }} />
+      <Stack.Screen name="Messenger" component={messenger} />
     </Stack.Navigator>
   );
 };
