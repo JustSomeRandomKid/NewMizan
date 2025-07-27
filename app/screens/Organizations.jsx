@@ -13,6 +13,7 @@ import {
 const { width: screenWidth } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth * 0.85;
 const SIDE_PADDING = (screenWidth - CARD_WIDTH) / 2;
+const SPACING = 20;
 
 const organizations = [
   {
@@ -21,7 +22,7 @@ const organizations = [
     image: require('../../assets/images/Figma/Rectangle (2).png'),
     logo: require('../../assets/images/Figma/Rectangle (5).png'),
     description: 'whatsapp: +972 053-924-052',
-    summary: 'Mosawa is awesome',
+    summary: 'The Mossawa Center, the Advocacy Center for Palestinian Arab citizens of Israel, was established in 1999 to promote the economic, social, cultural, and political rights of the Palestinian Arab minority in Israel and the recognition of this community as a national indigenous minority.',
   },
   {
     id: '2',
@@ -29,7 +30,7 @@ const organizations = [
     image: require('../../assets/images/Figma/Rectangle (3).png'),
     logo: require('../../assets/images/Figma/Rectangle (6).png'),
     description: 'whatsapp: +972 053-924-052',
-    summary: 'Sikuy doesn’t suck',
+    summary: 'Sikkuy-Aufoq is a shared Jewish and Arab nonprofit organization that works to advance equality and partnership between the Arab-Palestinian citizens of Israel – descendants of those who remained within the Israeli borders after the founding of the state in 1948 – and the country’s Jewish citizens.',
   },
   {
     id: '3',
@@ -37,7 +38,7 @@ const organizations = [
     image: require('../../assets/images/Figma/Rectangle (4).png'),
     logo: require('../../assets/images/Figma/Rectangle (7).png'),
     description: 'whatsapp: +972 053-924-052',
-    summary: 'Zazim is amazing',
+    summary: 'Zazim is the largest campaigning community in Israel with over 400,000 members. We are a civic movement of Arabs and Jews, working together for democracy and equality and promoting active civic engagement. ',
   },
 ];
 
@@ -47,7 +48,7 @@ const OrganizationCarouselPage = () => {
   const flatListRef = useRef(null);
 
   const handleDotPress = (index) => {
-    flatListRef.current?.scrollToOffset({ offset: index * CARD_WIDTH, animated: true });
+    flatListRef.current?.scrollToOffset({ offset: index * (CARD_WIDTH + SPACING), animated: true });
   };
 
   return (
@@ -59,11 +60,11 @@ const OrganizationCarouselPage = () => {
         data={organizations}
         horizontal
         pagingEnabled={false}
-        snapToInterval={CARD_WIDTH + 20}
+        snapToInterval={CARD_WIDTH + SPACING}
         decelerationRate="fast"
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: SIDE_PADDING }}
+        contentContainerStyle={{ paddingHorizontal: SIDE_PADDING - (SPACING / 2) }}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { x: scrollX } } }],
           { useNativeDriver: true }
@@ -71,9 +72,9 @@ const OrganizationCarouselPage = () => {
         scrollEventThrottle={16}
         renderItem={({ item, index }) => {
           const inputRange = [
-            (index - 1) * (CARD_WIDTH + 20),
-            index * (CARD_WIDTH + 20),
-            (index + 1) * (CARD_WIDTH + 20),
+            (index - 1) * (CARD_WIDTH + SPACING),
+            index * (CARD_WIDTH + SPACING),
+            (index + 1) * (CARD_WIDTH + SPACING),
           ];
 
           const scale = scrollX.interpolate({
@@ -102,9 +103,9 @@ const OrganizationCarouselPage = () => {
         {organizations.map((_, index) => {
           const opacity = scrollX.interpolate({
             inputRange: [
-              (index - 1) * (CARD_WIDTH + 20),
-              index * (CARD_WIDTH + 20),
-              (index + 1) * (CARD_WIDTH + 20),
+              (index - 1) * (CARD_WIDTH + SPACING),
+              index * (CARD_WIDTH + SPACING),
+              (index + 1) * (CARD_WIDTH + SPACING),
             ],
             outputRange: [0.3, 1, 0.3],
             extrapolate: 'clamp',
@@ -166,16 +167,16 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     width: CARD_WIDTH,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    backgroundColor: '#075d75ff',
+    borderRadius: 24,
     alignItems: 'center',
     padding: 20,
-    marginHorizontal: 10,
+    marginHorizontal: SPACING / 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
   },
   cardImage: {
     width: '100%',
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
   },
   summary: {
     fontSize: 16,
-    color: '#022D3A',
+    color: '#FFFFFF',
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -195,6 +196,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 45,
     borderRadius: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
   },
   chatButtonText: {
     fontSize: 16,
@@ -216,7 +222,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#FFDE59',
     borderWidth: 2,
-    borderColor: '#022D3A',
+    borderColor: '#4c91a6ff',
     marginHorizontal: 5,
   },
   modalContainer: {

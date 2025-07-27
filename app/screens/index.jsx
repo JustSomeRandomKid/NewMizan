@@ -1,243 +1,232 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
-import { config, database, account } from '../../lib/appwrite';  // Import the account module to interact with Appwrite services
-import * as Location from "expo-location";  // Import the location module to access device location
-import Ionicons from 'react-native-vector-icons/Ionicons';  // Import Ionicons for icon usage
+import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
+import { useEffect, useState } from 'react';
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { account, database, ID } from '../../lib/appwrite';
 
-const IndexScreen = () => {
-  const [crimes, setCrimes] = useState([]);  // State to hold the list of crimes
-  const [error, setError] = useState(null);  // State to hold error information
-  const [crimeTitle, setCrimeTitle] = useState('');  // State to hold the title of the crime being reported
-  const [crimeDescription, setCrimeDescription] = useState('');  // State to hold the description of the crime
-  const [crimeDate, setCrimeDate] = useState('');  // State to hold the date of the crime incident
-  const [location, setLocation] = useState(null);  // State to store the location coordinates
-  const [region, setRegion] = useState(null);  // State to store the region information (latitude/longitude)
-  const [user, setUser] = useState({ name: "Friend" });  // State to hold user information (replace with actual user data)
+const ReportCrime = () => {
+  const [crime, setCrime] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState('');
+  const [victimID, setVictimID] = useState('');
+  const [location, setLocation] = useState(null);
 
   useEffect(() => {
-    init();  // Initialize the component and fetch data when it loads
+    fetchUserID();
   }, []);
 
-  const init = async () => {
-    getData();  // Fetch crime data from the database when the component mounts
-  };
-
-  // Function to fetch crime data from the database
-  const getData = async () => {
+  const fetchUserID = async () => {
     try {
-      const { documents, total } = await database.listDocuments(config.db, config.col.crimes);  // Get list of crimes from the database
-      setCrimes(documents);  // Store the fetched crimes in the state
-      console.log(documents);  // Log the fetched documents for debugging
+      const session = await account.getSession('current');
+      setVictimID(session.userId);
     } catch (error) {
-      setError(error);  // Handle any errors while fetching data
+      Alert.alert('Error', 'Failed to get user session.');
     }
   };
 
-  // Function to fetch the current user's ID from the Appwrite session
-  const getUserID = async () => {
+  const handleAddLocation = async () => {
     try {
-      const session = await account.getSession('current');  // Get the current session from Appwrite
-      return session.userId;  // Return the user ID from the session
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Location permission is required.');
+        return;
+      }
+      const currentLocation = await Location.getCurrentPositionAsync({});
+      setLocation(currentLocation.coords);
     } catch (error) {
-      console.error("Error fetching user ID:", error);  // Log error if unable to fetch user ID
-      return null;
+      Alert.alert('Error', 'Failed to get location.');
     }
   };
 
-  // Function to request location permissions and get the current location
-  const getUserLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();  // Request permission to access location
-    if (status !== "granted") {
-      Alert.alert("Permission denied", "Enable location services to use this feature.");  // Show an alert if permission is denied
-      return;
-    }
-
-    const location = await Location.getCurrentPositionAsync({});  // Get the current location coordinates
-    setRegion({
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-      latitudeDelta: 0.05,  // Set the region boundaries for the map
-      longitudeDelta: 0.05,
-    });
-    setLocation(location.coords);  // Store the location coordinates
-  };
-
-  // Function to handle the crime report submission
-  const handleSubmit = async () => {
-    if (!crimeTitle || !crimeDescription || !crimeDate || !location) {
-      Alert.alert("Error", "Please fill in all fields before submitting.");  // Alert if any required fields are missing
-      return;
-    }
-
-    const userId = await getUserID();  // Get the authenticated user's ID
-    if (!userId) {
-      Alert.alert("Error", "Could not fetch user ID.");  // Alert if unable to get user ID
+  const handleReportCrime = async () => {
+    if (!crime || !description || !date) {
+      Alert.alert('Error', 'All fields are required.');
       return;
     }
 
     try {
-      const response = await database.createDocument(  // Create a new crime report document in the database
-        config.db,
-        config.col.crimes,
-        'unique()',  // Generate a unique ID for the new document
+      await database.createDocument(
+        process.env.EXPO_PUBLIC_APPWRITE_DB,
+        process.env.EXPO_PUBLIC_APPWRITE_CRIMES,
+        ID.unique(),
         {
-          crime: crimeTitle,
-          description: crimeDescription,
-          date: crimeDate,
-          latitude: location.latitude,  // Store the latitude of the location
-          longitude: location.longitude,  // Store the longitude of the location
-          victimID: userId,  // Store the user ID as the victim's ID
+          crime,
+          description,
+          date,
+          victimID,
+          location: location ? `${location.latitude}, ${location.longitude}` : null,
         }
       );
-
-      Alert.alert("Success", "Your crime report has been submitted. Our team will review it and get back to you.");  // Show success message
-      setCrimeTitle('');  // Clear the form fields after submission
-      setCrimeDescription('');
-      setCrimeDate('');
+      Alert.alert('Success', 'Crime reported successfully!');
+      setCrime('');
+      setDescription('');
+      setDate('');
       setLocation(null);
-      getData();  // Refresh the data to show the new report
-
     } catch (error) {
-      Alert.alert("Error", "Failed to submit crime report.");  // Show error message if submission fails
-      console.error(error);  // Log the error for debugging
+      Alert.alert('Error', 'Failed to report crime.');
     }
   };
 
   return (
-    <View style={styles.container}>
-      {/* Blue banner */}
-      <View style={styles.banner}>
-        <Text style={styles.welcomeText}>Welcome, {user?.name || "User"}</Text>  {/* Display the welcome message with the user's name */}
-      </View>
+    <View style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.headerRow}>
+          <FontAwesome5 name="shield-alt" size={24} color="#EEBA2B" style={styles.icon} />
+          <Text style={styles.title}>Report a Crime</Text>
+        </View>
 
-      {/* Report a Crime Section with custom icon */}
-      <View style={styles.reportSection}>
-        <Image source={require('../../assets/images/Figma/Vector (5).png')} style={styles.icon} />  {/* Crime report icon */}
-        <Text style={styles.reportTitle}>Report a Crime</Text>
-      </View>
+        <Text style={styles.label}>Type of Crime</Text>
+        <View style={styles.inputRow}>
+          <MaterialIcons name="report" size={20} color="#04445F" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            value={crime}
+            onChangeText={setCrime}
+            placeholder="e.g., Theft, Assault"
+            placeholderTextColor="#ccc"
+          />
+        </View>
 
-      {/* Form Box for submitting crime reports */}
-      <View style={styles.formBox}>
-        <TextInput
-          style={styles.input}
-          placeholder="Crime Title"
-          value={crimeTitle}
-          onChangeText={setCrimeTitle}  // Update state when text changes
-        />
-        <TextInput
-          style={[styles.input, styles.description]}
-          placeholder="Describe the crime"
-          multiline
-          value={crimeDescription}
-          onChangeText={setCrimeDescription}  // Update state when description changes
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Date of Incident (YYYY-MM-DD)"
-          value={crimeDate}
-          onChangeText={setCrimeDate}  // Update state when date changes
-        />
+        <Text style={styles.label}>Description</Text>
+        <View style={[styles.inputRow, styles.multilineRow]}>
+          <MaterialIcons name="description" size={20} color="#04445F" style={styles.inputIcon} />
+          <TextInput
+            style={[styles.input, styles.multilineInput]}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Provide detailed information"
+            placeholderTextColor="#ccc"
+            multiline
+            numberOfLines={4}
+          />
+        </View>
 
-        {/* Add Location Button with Icon */}
-        <TouchableOpacity style={styles.locationButton} onPress={getUserLocation}>
-          <Ionicons name="location-outline" size={20} color="#fff" style={styles.icon} />  {/* Location icon */}
-          <Text style={styles.locationButtonText}>Add Location</Text>  {/* Button text */}
+        <Text style={styles.label}>Date</Text>
+        <View style={styles.inputRow}>
+          <MaterialIcons name="calendar-today" size={20} color="#04445F" style={styles.inputIcon} />
+          <TextInput
+            style={styles.input}
+            value={date}
+            onChangeText={setDate}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor="#ccc"
+          />
+        </View>
+
+        <TouchableOpacity style={styles.secondaryButton} onPress={handleAddLocation}>
+          <Text style={styles.secondaryButtonText}>Add Location</Text>
         </TouchableOpacity>
 
         {location && (
           <Text style={styles.locationText}>
-            Location added: Latitude: {location.latitude}, Longitude: {location.longitude}  {/* Display the added location */}
+            Latitude: {location.latitude.toFixed(6)}, Longitude: {location.longitude.toFixed(6)}
           </Text>
         )}
 
-        {/* Submit Button */}
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Submit Report</Text>
+        <TouchableOpacity style={styles.button} onPress={handleReportCrime}>
+          <Text style={styles.buttonText}>Submit</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#04445F',
+  },
+  container: {
+    flexGrow: 1,
     padding: 20,
   },
-  banner: {
-    backgroundColor: "#04445E",  // Blue banner color
-    padding: 15,
-    borderRadius: 10,
+  headerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  welcomeText: {
-    color: "#EAB82C",  // Yellow text color
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  reportSection: {
-    flexDirection: "row",
-    alignItems: "center",
     marginBottom: 20,
   },
   icon: {
-    width: 24,
-    height: 24,
     marginRight: 10,
   },
-  reportTitle: {
-    fontSize: 42,
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#04445E',  // Blue color for the text
+    color: '#EEBA2B',
   },
-  formBox: {
-    backgroundColor: "#04445E",  // Blue form box color
-    padding: 20,
-    borderRadius: 10,
+  label: {
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 6,
+    marginTop: 10,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: 10,
+    paddingHorizontal: 12,
+  },
+  multilineRow: {
+    alignItems: 'flex-start',
+    paddingTop: 12,
+  },
+  inputIcon: {
+    marginTop: 2,
+    marginRight: 8,
   },
   input: {
-    backgroundColor: '#8F8E8E',  // Gray background color for inputs
-    padding: 15,
-    borderRadius: 5,
-    marginBottom: 15,
-    color: '#fff',
+    flex: 1,
     fontSize: 16,
+    color: '#000',
+    paddingVertical: 14,
   },
-  description: {
-    height: 120,
+  multilineInput: {
+    height: 100,
     textAlignVertical: 'top',
   },
-  locationButton: {
-    backgroundColor: '#EAB82C',  // Yellow button color
-    padding: 12,
-    borderRadius: 5,
-    justifyContent: 'center',
-    flexDirection: 'row',  // Align icon and text in a row
-    marginBottom: 10,
-  },
-  locationButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    marginLeft: 10,  // Space between the icon and the text
-  },
-  locationText: {
-    color: '#fff',
-    fontSize: 16,
-    marginBottom: 10,
-  },
   button: {
-    backgroundColor: '#fff',  // White submit button color
-    padding: 18,
-    borderRadius: 6,
+    backgroundColor: '#EEBA2B',
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 30,
     alignItems: 'center',
   },
   buttonText: {
-    fontSize: 24,
+    color: '#04445F',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  secondaryButton: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginTop: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  secondaryButtonText: {
+    color: '#04445F',
+    fontSize: 16,
     fontWeight: '600',
-    color: '#04445E',  // Blue text color
+  },
+  locationText: {
+    color: '#fff',
+    marginTop: 10,
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
 
-export default IndexScreen;
+export default ReportCrime;
