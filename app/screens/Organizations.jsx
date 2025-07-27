@@ -7,10 +7,12 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
-const { width } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
+const CARD_WIDTH = screenWidth * 0.85;
+const SIDE_PADDING = (screenWidth - CARD_WIDTH) / 2;
 
 const organizations = [
   {
@@ -45,24 +47,23 @@ const OrganizationCarouselPage = () => {
   const flatListRef = useRef(null);
 
   const handleDotPress = (index) => {
-    flatListRef.current?.scrollToOffset({ offset: index * width, animated: true });
+    flatListRef.current?.scrollToOffset({ offset: index * CARD_WIDTH, animated: true });
   };
 
   return (
     <View style={styles.container}>
-      {/* Title Section */}
-        <Text style={styles.mainTitle}>Follow-Up Assistance</Text>
-   
+      <Text style={styles.mainTitle}>Follow-Up Assistance</Text>
 
-      {/* Carousel Section */}
       <Animated.FlatList
         ref={flatListRef}
         data={organizations}
         horizontal
-        pagingEnabled
+        pagingEnabled={false}
+        snapToInterval={CARD_WIDTH + 20}
+        decelerationRate="fast"
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.flatListContent}
+        contentContainerStyle={{ paddingHorizontal: SIDE_PADDING }}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { x: scrollX } } }],
           { useNativeDriver: true }
@@ -70,27 +71,25 @@ const OrganizationCarouselPage = () => {
         scrollEventThrottle={16}
         renderItem={({ item, index }) => {
           const inputRange = [
-            (index - 1) * width,
-            index * width,
-            (index + 1) * width,
+            (index - 1) * (CARD_WIDTH + 20),
+            index * (CARD_WIDTH + 20),
+            (index + 1) * (CARD_WIDTH + 20),
           ];
+
           const scale = scrollX.interpolate({
             inputRange,
-            outputRange: [0.9, 1, 0.9],
+            outputRange: [0.92, 1, 0.92],
             extrapolate: 'clamp',
           });
 
           return (
-            <Animated.View style={[styles.cardWrapper, { transform: [{ scale }] }]}>
-
+            <Animated.View style={[styles.cardWrapper, { transform: [{ scale }] }]}> 
               <Image source={item.image} style={styles.cardImage} />
-
               <Text style={styles.summary}>{item.summary}</Text>
-
               <TouchableOpacity
                 style={styles.chatButton}
                 onPress={() => setSelectedOrg(item)}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
                 <Text style={styles.chatButtonText}>Chat</Text>
               </TouchableOpacity>
@@ -99,23 +98,23 @@ const OrganizationCarouselPage = () => {
         }}
       />
 
-      {/* Pagination Dots */}
       <View style={styles.indicatorContainer}>
         {organizations.map((_, index) => {
           const opacity = scrollX.interpolate({
             inputRange: [
-              (index - 1) * width,
-              index * width,
-              (index + 1) * width,
+              (index - 1) * (CARD_WIDTH + 20),
+              index * (CARD_WIDTH + 20),
+              (index + 1) * (CARD_WIDTH + 20),
             ],
             outputRange: [0.3, 1, 0.3],
             extrapolate: 'clamp',
           });
+
           return (
             <TouchableOpacity
               key={index}
               onPress={() => handleDotPress(index)}
-              activeOpacity={0.8}
+              activeOpacity={0.7}
               style={styles.indicatorTouchable}
             >
               <Animated.View style={[styles.indicator, { opacity }]} />
@@ -124,7 +123,6 @@ const OrganizationCarouselPage = () => {
         })}
       </View>
 
-      {/* Modal for Selected Organization */}
       {selectedOrg && (
         <Modal
           animationType="slide"
@@ -155,162 +153,114 @@ const OrganizationCarouselPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#04445E', // Light blue background
-    paddingTop: 40,
+    backgroundColor: '#022D3A',
+    paddingTop: 50,
     alignItems: 'center',
-  },
-  titleBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 30,
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    backgroundColor: '#04445E', // Deep blue
-    borderRadius: 12,
-    width: '90%',
   },
   mainTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
-    color: 'Black', // Bright yellow
+    color: '#FFDE59',
     textAlign: 'center',
-    letterSpacing: 1,
-  },
-  flatListContent: {
-    alignItems: 'center',
-    paddingHorizontal: 10,
+    marginBottom: 30,
   },
   cardWrapper: {
-    width: width - 40,
-    height:400,
-    marginHorizontal: 10,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    width: CARD_WIDTH,
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  cardHeader: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-    width: '100%',
-  },
-  logoSmall: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
-    resizeMode: 'contain',
-    marginRight: 15,
-    backgroundColor: '#F0F0F0',
-  },
-  cardTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#04445E',
-    flexShrink: 1,
+    padding: 20,
+    marginHorizontal: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   cardImage: {
-    width: 200,
-    height: 175,
+    width: '100%',
+    height: 180,
     borderRadius: 16,
-    resizeMode: 'cover',
+    marginBottom: 15,
   },
   summary: {
-    fontWeight: '600',
-    fontSize: 18,
-    color: '#04445E',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  description: {
     fontSize: 16,
-    color: '#666',
+    color: '#022D3A',
+    fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 22,
   },
   chatButton: {
     marginTop: 20,
-    backgroundColor: '#FFDE59', // Yellow button
-    paddingVertical: 14,
-    paddingHorizontal: 50,
-    borderRadius: 30,
-    shadowColor: '#FFDE59',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 5,
+    backgroundColor: '#FFDE59',
+    paddingVertical: 12,
+    paddingHorizontal: 45,
+    borderRadius: 25,
   },
   chatButtonText: {
-    fontSize: 18,
-    color: '#04445E', // Blue text
+    fontSize: 16,
+    color: '#022D3A',
     fontWeight: 'bold',
-    letterSpacing: 0.7,
   },
   indicatorContainer: {
     flexDirection: 'row',
-    marginTop: 25,
-    justifyContent: 'center',
+    marginTop: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   indicatorTouchable: {
-    padding: 8,
+    padding: 6,
   },
   indicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#FFDE59', // Yellow dots
-    marginHorizontal: 8,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FFDE59',
     borderWidth: 2,
-    borderColor: '#04445E', // Blue border
+    borderColor: '#022D3A',
+    marginHorizontal: 5,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(4, 68, 94, 0.85)', // Dark translucent blue overlay
-    paddingHorizontal: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   modalContent: {
-    width: width - 60,
+    width: screenWidth - 60,
     backgroundColor: '#FFFFFF',
-    padding: 30,
     borderRadius: 20,
+    padding: 25,
     alignItems: 'center',
   },
-  modalTitle: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#04445E',
-    textAlign: 'center',
+  logoSmall: {
+    width: 60,
+    height: 60,
     marginBottom: 15,
+    resizeMode: 'contain',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#022D3A',
+    marginBottom: 10,
   },
   modalDescription: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#333',
     textAlign: 'center',
-    marginBottom: 25,
-    lineHeight: 26,
+    lineHeight: 24,
+    marginBottom: 20,
   },
   closeButton: {
-    backgroundColor: '#04445E',
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: 30,
+    backgroundColor: '#022D3A',
+    paddingVertical: 12,
+    paddingHorizontal: 35,
+    borderRadius: 25,
   },
   closeButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#FFDE59',
-    fontWeight: 'bold',
-    letterSpacing: 0.7,
+    fontWeight: '600',
   },
 });
 

@@ -1,79 +1,141 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Client, Databases, Account, ID } from "react-native-appwrite";
+import { useEffect, useState } from 'react';
+import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Account, Client, Databases, ID } from "react-native-appwrite";
 
 const Messenger = () => {
-    const [NGOChatHistory, setNGOChatHistory] = useState([])
-    const [NGO, setNGO] = useState("matan")
+    const [NGOChatHistory, setNGOChatHistory] = useState([]);
+    const [NGO, setNGO] = useState("matan");
+    const [messageInput, setMessageInput] = useState("");
 
     const client = new Client()
         .setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT)
         .setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECTID);
 
-    // Init
     const account = new Account(client);
     const databases = new Databases(client);
 
     useEffect(() => {
-        // Subscribe to realtime updates
         const unsubscribe = client.subscribe(`databases.default.collections.${NGO}.documents`, response => {
-            // Check to avoid adding the same message twice to local history
-            if(response.payload.sender !== account.name) {
-                // Takes the current chat history array and adds the new response to it
+            if (response.payload.sender !== account.name) {
                 setNGOChatHistory(prevHistory => [...prevHistory, response.payload]);
             }
         });
 
-        // Cleans up subscription when component dies
         return () => {
             unsubscribe();
         };
     }, [NGO]);
 
-    const send_message = async(message, sender, NGO) => {
-        // Create the new message object
+    const send_message = async (message, sender, NGO) => {
         const newMessage = {
             message,
             sender,
             timestamp: new Date().toISOString()
         };
 
-        // Instantly update local version of history for smooth experience
         setNGOChatHistory(prevHistory => [...prevHistory, newMessage]);
 
-        // Adding new message to db
         try {
             const res = await databases.createDocument(
                 'default',
-                NGO, // Using NGO as collection name
+                NGO,
                 ID.unique(),
                 newMessage
             );
             console.log("Message sent successfully:", res);
-        }
-        catch(error) {
+        } catch (error) {
             console.error("Send Message Error:", error);
-            // Remove the message from local history if it failed to send
-            setNGOChatHistory(prevHistory => 
+            setNGOChatHistory(prevHistory =>
                 prevHistory.filter(msg => msg.timestamp !== newMessage.timestamp)
             );
         }
-    }
+    };
 
-    return(
-        <View style={styles.container}>
-            
+    const renderItem = ({ item }) => (
+        <View style={styles.messageBubble}>
+            <Text style={styles.messageSender}>{item.sender}</Text>
+            <Text style={styles.messageText}>{item.message}</Text>
         </View>
-    )
-}
+    );
+
+    return (
+        <KeyboardAvoidingView
+            style={styles.container}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={90}
+        >
+            <FlatList
+                data={NGOChatHistory}
+                renderItem={renderItem}
+                keyExtractor={(item, index) => item.timestamp + index}
+                contentContainerStyle={styles.chatContainer}
+            />
+            <View style={styles.inputContainer}>
+                <TextInput
+                    style={styles.textInput}
+                    placeholder="Type a message..."
+                    value={messageInput}
+                    onChangeText={setMessageInput}
+                />
+                <TouchableOpacity style={styles.sendButton}>
+                    <Text style={styles.sendButtonText}>Send</Text>
+                </TouchableOpacity>
+            </View>
+        </KeyboardAvoidingView>
+    );
+};
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'blue'
+        backgroundColor: '#04445E'
     },
     chatContainer: {
-        flex: 1
+        backgroundColor: '#04445E',
+        padding: 10,
+        paddingBottom: 80 // space for the input field
+    },
+    messageBubble: {
+        backgroundColor: '#ffffff',
+        borderRadius: 10,
+        padding: 10,
+        marginBottom: 10,
+        alignSelf: 'flex-start',
+        maxWidth: '80%'
+    },
+    messageSender: {
+        fontWeight: 'bold',
+        marginBottom: 5
+    },
+    messageText: {
+        fontSize: 16
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        borderTopWidth: 1,
+        borderColor: '#ccc',
+        backgroundColor: '#fff',
+    },
+    textInput: {
+        flex: 1,
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingHorizontal: 15,
+        marginRight: 10
+    },
+    sendButton: {
+        backgroundColor: '#007AFF',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 20
+    },
+    sendButtonText: {
+        color: '#fff',
+        fontWeight: 'bold'
     }
 });
 
