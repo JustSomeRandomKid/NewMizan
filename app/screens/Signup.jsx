@@ -1,8 +1,10 @@
 import { yupResolver } from "@hookform/resolvers/yup";
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import * as yup from "yup";
-import { account, ID } from "../../lib/appwrite"; // Ensure correct path
+import { auth, db } from '../../firebaseConfig.js';
 
 // Validation schema using Yup
 const schema = yup.object().shape({
@@ -21,14 +23,54 @@ const SignupScreen = ({ navigation }) => {
   const onSubmit = async (data) => {
     try {
       console.log("Signing up with:", data);
-      // Call the Appwrite account create function to register the user
-      const user = await account.create(ID.unique(), data.email, data.password);
+      
+      // Create user with email and password using Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const user = userCredential.user;
+      
+      // Update the user's display name
+      await updateProfile(user, {
+        displayName: data.name
+      });
+
+      // Optional: Store additional user data in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        name: data.name,
+        email: data.email,
+        createdAt: new Date(),
+        uid: user.uid
+      });
+
       console.log("Signup successful:", user);
       Alert.alert("Signup Successful", "You can now log in!");
       navigation.navigate("Login");
     } catch (error) {
       console.error("Signup Error:", error);
-      Alert.alert("Signup Failed", error.message);
+      
+      // Handle specific Firebase Auth errors
+      let errorMessage = "Signup failed. Please try again.";
+      
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = "An account with this email already exists.";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "Invalid email address.";
+          break;
+        case 'auth/operation-not-allowed':
+          errorMessage = "Email/password accounts are not enabled.";
+          break;
+        case 'auth/weak-password':
+          errorMessage = "Password is too weak. Please choose a stronger password.";
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = "Network error. Please check your connection.";
+          break;
+        default:
+          errorMessage = error.message;
+      }
+      
+      Alert.alert("Signup Failed", errorMessage);
     }
   };
 
@@ -92,12 +134,12 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   separator: {
-  transform: [{ translateY: -125 }],
-  width: "95%",        
-  height: 4,            
-  backgroundColor: "#EEBA2B", 
-  marginVertical: 20,   
-},
+    transform: [{ translateY: -125 }],
+    width: "95%",        
+    height: 4,            
+    backgroundColor: "#EEBA2B", 
+    marginVertical: 20,   
+  },
   logo: {
     transform: [{ translateY: -75 }],
     width: 500,

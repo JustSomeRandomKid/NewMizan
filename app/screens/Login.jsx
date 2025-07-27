@@ -1,8 +1,9 @@
 import { yupResolver } from "@hookform/resolvers/yup";
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import * as yup from "yup";
-import { account } from "../../lib/appwrite"; // Import account module for authentication
+import { auth } from '../../firebaseConfig.js';
 
 // Validation schema for login form fields
 const schema = yup.object().shape({
@@ -21,27 +22,48 @@ const LoginScreen = ({ navigation }) => {
     try {
       console.log("Logging in with:", data);
 
-      // Check if a session already exists, and delete if found
-      try {
-        const existingSession = await account.get();
-        if (existingSession) {
-          await account.deleteSessions(); // Deleting any active sessions before login
-          console.log("Deleted existing session, proceeding to login...");
-        }
-      } catch (sessionError) {
-        console.log("No active session found, proceeding with login...");
+      // Sign out any existing user first (optional - similar to deleting sessions in Appwrite)
+      if (auth.currentUser) {
+        await signOut(auth);
+        console.log("Signed out existing user, proceeding to login...");
       }
 
-      // Create a new session with email and password
-      const session = await account.createEmailPasswordSession(data.email, data.password);
-      console.log("Login successful:", session);
+      // Sign in with email and password using Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      const user = userCredential.user;
+      
+      console.log("Login successful:", user);
 
       // Alert the user and navigate to the main screen after successful login
       Alert.alert("Login Successful", "Welcome back!");
       navigation.navigate("Messenger");
     } catch (error) {
-      console.error("Login Error:", error); // Log error if login fails
-      Alert.alert("Login Failed", error.message); // Show error message in case of failure
+      console.error("Login Error:", error);
+      
+      // Handle specific Firebase Auth errors
+      let errorMessage = "Login failed. Please try again.";
+      
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = "No account found with this email address.";
+          break;
+        case 'auth/wrong-password':
+          errorMessage = "Incorrect password.";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "Invalid email address.";
+          break;
+        case 'auth/user-disabled':
+          errorMessage = "This account has been disabled.";
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = "Too many failed attempts. Please try again later.";
+          break;
+        default:
+          errorMessage = error.message;
+      }
+      
+      Alert.alert("Login Failed", errorMessage);
     }
   };
 
@@ -105,13 +127,13 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginBottom: 20,
   },
-    separator: {
-  transform: [{ translateY: -125 }],
-  width: "95%",        
-  height: 4,            
-  backgroundColor: "#EEBA2B", 
-  marginVertical: 20,   
-},
+  separator: {
+    transform: [{ translateY: -125 }],
+    width: "95%",        
+    height: 4,            
+    backgroundColor: "#EEBA2B", 
+    marginVertical: 20,   
+  },
   input: {
     transform: [{ translateY: -120 }],
     width: "100%",

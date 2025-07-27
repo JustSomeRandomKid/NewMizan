@@ -1,10 +1,19 @@
+import {
+    addDoc,
+    collection,
+    serverTimestamp
+} from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Account, Client, Databases, ID } from "react-native-appwrite";
+import { db } from '../../firebaseConfig.js';
+
+
 
 const Messenger = () => {
+
     const [NGOChatHistory, setNGOChatHistory] = useState([]);
-    const [NGO, setNGO] = useState("matan");
+    const [NGO, setNGO] = useState("");
     const [messageInput, setMessageInput] = useState("");
 
     const client = new Client()
@@ -26,14 +35,18 @@ const Messenger = () => {
         };
     }, [NGO]);
 
+    const get_chats = async () => {
+        const chats = await getDocs(collection(db, 'ngos/${NGO}/users/user_abc/chats'));
+
+    }
     const send_message = async () => {
         if (!messageInput.trim()) return;
 
-        const newMessage = {
-            message: messageInput,
-            sender: "You",
-            timestamp: new Date().toISOString()
-        };
+        await addDoc(collection(collection(collection('NGOName'),'1/1/25'), 'messages'), {
+        text: 'Hello world',
+        sender: 'user123',
+        timestamp: serverTimestamp()
+        });
 
         setNGOChatHistory(prevHistory => [...prevHistory, newMessage]);
         setMessageInput("");
