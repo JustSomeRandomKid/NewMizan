@@ -26,14 +26,17 @@ const Messenger = () => {
         };
     }, [NGO]);
 
-    const send_message = async (message, sender, NGO) => {
+    const send_message = async () => {
+        if (!messageInput.trim()) return;
+
         const newMessage = {
-            message,
-            sender,
+            message: messageInput,
+            sender: "You",
             timestamp: new Date().toISOString()
         };
 
         setNGOChatHistory(prevHistory => [...prevHistory, newMessage]);
+        setMessageInput("");
 
         try {
             const res = await databases.createDocument(
@@ -51,35 +54,43 @@ const Messenger = () => {
         }
     };
 
-    const renderItem = ({ item }) => (
-        <View style={styles.messageBubble}>
-            <Text style={styles.messageSender}>{item.sender}</Text>
-            <Text style={styles.messageText}>{item.message}</Text>
-        </View>
-    );
+    const renderItem = ({ item }) => {
+        const time = new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return (
+            <View style={styles.messageBubble}>
+                <Text style={styles.messageSender}>{item.sender}</Text>
+                <Text style={styles.messageText}>{item.message}</Text>
+                <Text style={styles.messageTimestamp}>{time}</Text>
+            </View>
+        );
+    };
 
     return (
         <KeyboardAvoidingView
             style={styles.container}
             behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={90}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 20}
         >
-            <FlatList
-                data={NGOChatHistory}
-                renderItem={renderItem}
-                keyExtractor={(item, index) => item.timestamp + index}
-                contentContainerStyle={styles.chatContainer}
-            />
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.textInput}
-                    placeholder="Type a message..."
-                    value={messageInput}
-                    onChangeText={setMessageInput}
+            <View style={styles.chatWrapper}>
+                <FlatList
+                    data={NGOChatHistory}
+                    renderItem={renderItem}
+                    keyExtractor={(item, index) => item.timestamp + index}
+                    contentContainerStyle={styles.chatContainer}
                 />
-                <TouchableOpacity style={styles.sendButton}>
-                    <Text style={styles.sendButtonText}>Send</Text>
-                </TouchableOpacity>
+            </View>
+            <View style={styles.inputContainerWrapper}>
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Type a message..."
+                        value={messageInput}
+                        onChangeText={setMessageInput}
+                    />
+                    <TouchableOpacity style={styles.sendButton} onPress={send_message}>
+                        <Text style={styles.sendButtonText}>Send</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </KeyboardAvoidingView>
     );
@@ -90,10 +101,13 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#04445E'
     },
+    chatWrapper: {
+        flex: 1
+    },
     chatContainer: {
         backgroundColor: '#04445E',
         padding: 10,
-        paddingBottom: 80 // space for the input field
+        paddingBottom: 10
     },
     messageBubble: {
         backgroundColor: '#ffffff',
@@ -110,13 +124,23 @@ const styles = StyleSheet.create({
     messageText: {
         fontSize: 16
     },
+    messageTimestamp: {
+        fontSize: 12,
+        color: '#888',
+        marginTop: 5,
+        textAlign: 'right'
+    },
+    inputContainerWrapper: {
+        paddingBottom: Platform.OS === 'android' ? 10 : 30,
+        backgroundColor: '#fff'
+    },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 10,
+        paddingHorizontal: 10,
+        paddingTop: 5,
         borderTopWidth: 1,
-        borderColor: '#ccc',
-        backgroundColor: '#fff',
+        borderColor: '#ccc'
     },
     textInput: {
         flex: 1,

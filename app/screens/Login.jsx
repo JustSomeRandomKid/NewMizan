@@ -38,7 +38,7 @@ const LoginScreen = ({ navigation }) => {
 
       // Alert the user and navigate to the main screen after successful login
       Alert.alert("Login Successful", "Welcome back!");
-      navigation.navigate("Main");
+      navigation.navigate("Messenger");
     } catch (error) {
       console.error("Login Error:", error); // Log error if login fails
       Alert.alert("Login Failed", error.message); // Show error message in case of failure
