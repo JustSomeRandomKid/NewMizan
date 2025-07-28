@@ -1,14 +1,24 @@
 import axios from "axios";
 import * as Location from "expo-location";
+import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
 import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
+import { db } from "../../firebaseConfig.js"; // Adjust the path if needed
 
 const PlacesMap = () => {
   const [places, setPlaces] = useState([]);
   const [region, setRegion] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("police");
-  const [loading, setLoading] = useState(false); // Loading state for fetching places
+  const [loading, setLoading] = useState(false);
+  const [resources, setResources] = useState([]);
 
   useEffect(() => {
     const getUserLocation = async () => {
@@ -30,18 +40,35 @@ const PlacesMap = () => {
     getUserLocation();
   }, []);
 
+  useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "Resources"));
+        const resourceList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setResources(resourceList);
+      } catch (error) {
+        console.error("Error fetching resources:", error);
+        Alert.alert("Error", "Failed to load resources.");
+      }
+    };
+
+    fetchResources();
+  }, []);
+
   const fetchPlaces = async (category) => {
-    setLoading(true); // Set loading to true when fetching starts
-    let allResults = [];
+    setLoading(true);
     try {
       const url = `https://nominatim.openstreetmap.org/search?q=${category}&format=json&countrycodes=IL&limit=50`;
       const response = await axios.get(url);
-      allResults = response.data;
+      const allResults = response.data;
 
       const formattedPlaces = allResults.map((place) => ({
         lat: parseFloat(place.lat),
         lon: parseFloat(place.lon),
-        name: place.display_name.split(",")[0], // Shorten name
+        name: place.display_name.split(",")[0],
         address: place.display_name,
       }));
 
@@ -50,13 +77,13 @@ const PlacesMap = () => {
       console.error("Error fetching locations:", error);
       Alert.alert("Error", "Failed to fetch locations. Please try again.");
     } finally {
-      setLoading(false); // Set loading to false once the fetch is complete
+      setLoading(false);
     }
   };
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
-    fetchPlaces(category); // Fetch places based on selected category
+    fetchPlaces(category);
   };
 
   return (
@@ -92,23 +119,30 @@ const PlacesMap = () => {
         <Text>Loading map...</Text>
       )}
 
-      {loading && (
-        <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
-      )}
-      <View style={styles.Resources}>
-        
+      {loading && <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />}
+
+      {/* Scrollable Resources List */}
+      <View style={styles.resourcesContainer}>
+        <FlatList
+          data={resources}
+          horizontal
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 10 }}
+          renderItem={({ item }) => (
+            <View style={styles.resourceCard}>
+              <Text style={styles.resourceTitle}>{item.name}</Text>
+              <Text style={styles.resourceType}>Type: {item.type}</Text>
+              <Text style={styles.resourceLocation}>Location: {item.location}</Text>
+              <Text style={styles.resourceHours}>Hours: {item.hours}</Text>
+              {item.description ? (
+                <Text style={styles.resourceDescription}>{item.description}</Text>
+              ) : null}
+            </View>
+          )}
+        />
       </View>
-      <View style={styles.directoryContainer}>
-        <TouchableOpacity onPress={() => handleCategorySelect("police")}>
-          <Text style={[styles.directoryText, { color: "blue" }]}>Police</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleCategorySelect("hospital")}>
-          <Text style={[styles.directoryText, { color: "red" }]}>Hospital</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleCategorySelect("shelter")}>
-          <Text style={[styles.directoryText, { color: "green" }]}>Shelter</Text>
-        </TouchableOpacity>
-      </View>
+
     </View>
   );
 };
@@ -126,23 +160,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     borderRadius: 8,
-    zIndex: 1,
+    zIndex: 2,
   },
   headerText: {
     fontSize: 20,
     fontWeight: "bold",
-  },
-  directoryContainer: {
-    position: "absolute",
-    bottom: 20,
-    right: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    zIndex: 2,
-  },
-  directoryText: {
-    fontSize: 16,
-    marginVertical: 5,
-    textAlign: "center",
   },
   map: {
     flex: 1,
@@ -152,6 +174,60 @@ const styles = StyleSheet.create({
     top: "50%",
     left: "50%",
     transform: [{ translateX: -25 }, { translateY: -25 }],
+  },
+  resourcesContainer: {
+    position: "absolute",
+    bottom: 80,
+    left: 0,
+    right: 0,
+    paddingVertical: 10,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    zIndex: 2,
+  },
+  resourceCard: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 10,
+    marginHorizontal: 8,
+    minWidth: 200,
+    elevation: 3,
+  },
+  resourceTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  resourceType: {
+    fontSize: 14,
+    color: "#333",
+  },
+  resourceLocation: {
+    fontSize: 13,
+    color: "#444",
+  },
+  resourceHours: {
+    fontSize: 13,
+    color: "#666",
+    fontStyle: "italic",
+  },
+  resourceDescription: {
+    fontSize: 12,
+    color: "#555",
+    marginTop: 4,
+  },
+  directoryContainer: {
+    position: "absolute",
+    bottom: 20,
+    right: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    padding: 10,
+    borderRadius: 8,
+    zIndex: 2,
+  },
+  directoryText: {
+    fontSize: 16,
+    marginVertical: 5,
+    textAlign: "center",
   },
 });
 

@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { signOut } from 'firebase/auth';
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { auth } from '../../firebaseConfig.js'; // Add your firebase config path
@@ -20,14 +21,19 @@ const IndexScreen = ({ navigation }) => {
     navigation.navigate("Report")
   }
   const logout = () => {
-    user.logout()
+    signOut(auth)
+    navigation.navigate("Main")
   }
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.userText}>Hello, {user}!</Text>
-        <Text style={styles.subtitle}>Welcome back to Mizan!</Text>
-        <TouchableOpacity style={'height:10,width:10'} onPress={logout}>Logout</TouchableOpacity>
+        <View>
+          <Text style={styles.userText}>Hello, {user}!</Text>
+          <Text style={styles.subtitle}>Welcome back to Mizan!</Text>
+        </View>
+        <TouchableOpacity style={styles.logout} onPress={logout}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
       </View>
       
       <View style={styles.mainContent}>
@@ -73,6 +79,8 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 40,
     paddingTop: 20,
+    display: 'flex',
+    flexDirection: 'row'
   },
   userText: {
     color: '#fff',
@@ -149,6 +157,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: 10,
   },
+  logout: {
+    height:20,
+    width:50,
+    backgroundColor: 'red',
+    marginLeft:100,
+
+  },
+  logoutText: {
+    color:'white',
+  }
 });
 
 export default IndexScreen;
