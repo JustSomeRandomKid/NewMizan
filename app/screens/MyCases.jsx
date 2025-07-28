@@ -123,7 +123,6 @@ const styles = StyleSheet.create({
   logo: {
     width: 28,
     height: 28,
-    tintColor: 'white',
   },
   segmentedControl: {
     flexDirection: 'row',

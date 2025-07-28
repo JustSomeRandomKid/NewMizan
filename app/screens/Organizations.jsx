@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
-const CARD_WIDTH = screenWidth * 0.85;
+const CARD_WIDTH = screenWidth * 0.78; // Smaller width to reveal adjacent cards
 const SIDE_PADDING = (screenWidth - CARD_WIDTH) / 2;
 const SPACING = 20;
 
@@ -55,6 +55,7 @@ const OrganizationCarouselPage = ({navigation}) => {
     setSelectedOrg(NGO)
     navigation.navigate("Messenger")
   }
+
   return (
     <View style={styles.container}>
       <Text style={styles.mainTitle}>Follow-Up Assistance</Text>
@@ -68,7 +69,10 @@ const OrganizationCarouselPage = ({navigation}) => {
         decelerationRate="fast"
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: SIDE_PADDING - (SPACING / 2) }}
+        contentContainerStyle={{
+          paddingLeft: SIDE_PADDING - (SPACING / 2),
+          paddingRight: SIDE_PADDING,
+        }}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { x: scrollX } } }],
           { useNativeDriver: true }
@@ -175,7 +179,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     padding: 20,
-    marginHorizontal: SPACING / 2,
+    marginHorizontal: SPACING / 3, // slightly less margin to reveal more of the sides
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
