@@ -1,10 +1,10 @@
-import React from 'react'; 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Image, StyleSheet } from 'react-native'; // Import StyleSheet for styling components
 import IndexScreen from './screens/index';
-import Organizations from './screens/Organizations';
-import MyRights from './screens/MyRights';
+import Messenger from './screens/Messenger';
 import MyCases from './screens/MyCases';
+import MyRights from './screens/MyRights';
+import Organizations from './screens/Organizations';
 
 // Create a Bottom Tab Navigator instance
 const Tab = createBottomTabNavigator();
@@ -62,6 +62,8 @@ function MainContainer() {
       <Tab.Screen name="Organizations" component={Organizations} />
       <Tab.Screen name="Resources" component={MyRights} />
       <Tab.Screen name="My Cases" component={MyCases} />
+      <Tab.Screen name ="Messenger" component={Messenger} />
+      
     </Tab.Navigator>
   );
 }

@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator } from "react-native";
-import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
-import * as Location from "expo-location";
 import axios from "axios";
+import * as Location from "expo-location";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
 
 const PlacesMap = () => {
   const [places, setPlaces] = useState([]);
@@ -95,7 +95,9 @@ const PlacesMap = () => {
       {loading && (
         <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
       )}
-
+      <View style={styles.Resources}>
+        
+      </View>
       <View style={styles.directoryContainer}>
         <TouchableOpacity onPress={() => handleCategorySelect("police")}>
           <Text style={[styles.directoryText, { color: "blue" }]}>Police</Text>

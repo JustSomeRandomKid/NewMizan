@@ -1,13 +1,15 @@
+import { MaterialIcons } from '@expo/vector-icons';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { account, database } from '../../lib/appwrite'; // Import the account module
-import BadgeComponent from '../components/Badge'; // Custom Badge component
-import CardComponent from '../components/Card'; // Assuming CardComponent is in 'components' folder
+import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { auth, db } from '../../firebaseConfig';
+import BadgeComponent from '../components/Badge';
 
 const Cases = () => {
-  const [cases, setCases] = useState([]);  // Stores the list of cases
-  const [error, setError] = useState(null);  // Error state for displaying errors
-  const [userID, setUserID] = useState(null); // Stores the user ID to fetch relevant cases
+  const [cases, setCases] = useState([]);
+  const [error, setError] = useState(null);
+  const [userID, setUserID] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Fetch the user session when the component mounts
   useEffect(() => {
@@ -17,9 +19,13 @@ const Cases = () => {
   // Fetch the current user's ID and then retrieve their cases
   const fetchUserID = async () => {
     try {
-      const session = await account.getSession('current');  // Fetch the current session
-      setUserID(session.userId);  // Set the user ID state
-      fetchCases(session.userId); // Fetch the cases associated with this user
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        setUserID(currentUser.uid);
+        fetchCases(currentUser.uid);
+      } else {
+        setError("No user session found."); // Set error if no user is logged in
+      }
     } catch (error) {
       setError("Error fetching user session."); // Set error if session fetching fails
     }
@@ -28,50 +34,148 @@ const Cases = () => {
   // Fetch the list of cases associated with the given user ID
   const fetchCases = async (userId) => {
     try {
-      const { documents } = await database.listDocuments(process.env.EXPO_PUBLIC_APPWRITE_DB, process.env.EXPO_PUBLIC_APPWRITE_CRIMES); // Retrieve crime cases
-      const filteredCases = documents.filter(doc => doc.victimID === userId); // Filter by victim ID
-      const formattedCases = filteredCases.map(doc => ({
-        id: doc.$id,
-        crimeTitle: doc.crime,
-        crimeDescription: doc.description,
-        crimeDate: doc.date,
-        status: "Pending", // Default status until updated
+      setError(null); // Clear any previous errors
+      
+      // Create a query to get documents where victimID equals the current user's ID
+      const crimesRef = collection(db, 'crimes');
+      const q = query(crimesRef, where('victimID', '==', userId));
+      
+      // Execute the query
+      const querySnapshot = await getDocs(q);
+      
+      // Format the documents
+      const formattedCases = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        crimeTitle: doc.data().crime,
+        crimeDescription: doc.data().description,
+        crimeDate: doc.data().date,
+        status: doc.data().status || "Pending", // Use status from Firestore or default to "Pending"
+        location: doc.data().location,
       }));
+      
+      // Sort cases by date (newest first)
+      formattedCases.sort((a, b) => new Date(b.crimeDate) - new Date(a.crimeDate));
+      
       setCases(formattedCases); // Set the formatted cases to the state
     } catch (error) {
-      setError(error.message); // Set error message if fetching cases fails
+      console.error('Error fetching cases:', error);
+      setError("Failed to fetch cases. Please try again."); // Set error message if fetching cases fails
     }
   };
 
   // Function to determine badge color based on the status of the case
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "solved":
-        return "#D1D5DB"; // Yellow
-      case "In Progress":
-        return "#EAB82C"; // Blue
-      case "Pending":
-        return "#FFD700"; // Gray
+        return "#10B981"; // Green
+      case "in progress":
+        return "#3B82F6"; // Blue
+      case "pending":
+        return "#F59E0B"; // Amber
+      case "closed":
+        return "#6B7280"; // Gray
       default:
-        return "#D1D5DB"; // Default color for unknown status
+        return "#F59E0B"; // Default amber color
     }
   };
 
+  // Function to refresh cases
+  const onRefresh = async () => {
+    setRefreshing(true);
+    if (userID) {
+      await fetchCases(userID);
+    }
+    setRefreshing(false);
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const renderCaseItem = ({ item }) => (
+    <View style={styles.caseCard}>
+      <View style={styles.caseHeader}>
+        <View style={styles.titleContainer}>
+          <MaterialIcons name="report-problem" size={20} color="#FFD700" />
+          <Text style={styles.caseTitle}>{item.crimeTitle}</Text>
+        </View>
+        <BadgeComponent text={item.status} color={getStatusColor(item.status)} />
+      </View>
+      
+      <Text style={styles.caseDescription} numberOfLines={3}>
+        {item.crimeDescription}
+      </Text>
+      
+      <View style={styles.caseFooter}>
+        <View style={styles.dateContainer}>
+          <MaterialIcons name="calendar-today" size={16} color="#B0C4DE" />
+          <Text style={styles.dateText}>Filed: {formatDate(item.crimeDate)}</Text>
+        </View>
+        {item.location && (
+          <View style={styles.locationContainer}>
+            <MaterialIcons name="location-on" size={16} color="#B0C4DE" />
+            <Text style={styles.locationText}>Location recorded</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <MaterialIcons name="folder-open" size={80} color="#4A5568" />
+      <Text style={styles.emptyTitle}>No Cases Found</Text>
+      <Text style={styles.emptyDescription}>
+        You haven't filed any reports yet. Your submitted cases will appear here.
+      </Text>
+      <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
+        <MaterialIcons name="refresh" size={20} color="#0a2836" />
+        <Text style={styles.refreshButtonText}>Refresh</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>My Cases</Text>
-      {error && <Text style={styles.errorText}>{error}</Text>} {/* Show error message if there's an error */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>My Cases</Text>
+        <Text style={styles.headerSubtitle}>
+          {cases.length} {cases.length === 1 ? 'case' : 'cases'} on file
+        </Text>
+      </View>
+
+      {error && (
+        <View style={styles.errorContainer}>
+          <MaterialIcons name="error" size={20} color="#EF4444" />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
       <FlatList
         data={cases}
-        keyExtractor={(item) => item.id} // Use unique ID for key
-        renderItem={({ item }) => (
-          <CardComponent title={item.crimeTitle} description={item.crimeDescription}>
-            <View style={styles.cardFooter}>
-              <Text style={styles.dateText}>Filed: {String(item.crimeDate)}</Text>
-              <BadgeComponent text={item.status} color={getStatusColor(item.status)} /> {/* Render badge with status color */}
-            </View>
-          </CardComponent>
-        )}
+        keyExtractor={(item) => item.id}
+        renderItem={renderCaseItem}
+        ListEmptyComponent={!error ? renderEmptyState : null}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#FFD700']}
+            tintColor="#FFD700"
+          />
+        }
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
@@ -80,30 +184,139 @@ const Cases = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#0a2836',
   },
   header: {
-    fontSize: 36, // Larger font size for the header
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 30,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 50,
-    backgroundColor: '#04445E', // Dark blue background
-    color: 'white', // White text color for contrast
-    paddingVertical: 40,
-    textAlign: 'center',
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
-  },
-  cardFooter: {
+    color: '#fff',
     marginTop: 10,
-    alignItems: 'flex-end',
+    marginBottom: 5,
   },
-  dateText: {
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#B0C4DE',
+    fontWeight: '400',
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  caseCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  caseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 10,
+  },
+  caseTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginLeft: 8,
+    flex: 1,
+  },
+  caseDescription: {
     fontSize: 14,
     color: '#6B7280',
-    marginBottom: 5,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  caseFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginLeft: 4,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locationText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginLeft: 4,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEE2E2',
+    margin: 20,
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#EF4444',
+  },
+  errorText: {
+    color: '#EF4444',
+    marginLeft: 8,
+    flex: 1,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  emptyDescription: {
+    fontSize: 16,
+    color: '#B0C4DE',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 30,
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  refreshButtonText: {
+    color: '#0a2836',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
 
