@@ -61,6 +61,10 @@ const IndexScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#04445F',
+  },
   container: {
     flex: 1,
     backgroundColor: '#0a2836',
