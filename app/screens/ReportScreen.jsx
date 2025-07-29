@@ -1,16 +1,18 @@
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { addDoc, collection } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
   Alert,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 
@@ -20,6 +22,8 @@ const ReportCrime = ({ navigation }) => {
   const [date, setDate] = useState('');
   const [victimID, setVictimID] = useState('');
   const [location, setLocation] = useState(null);
+  const [attachments, setAttachments] = useState([]);
+  const [isMediaModalVisible, setMediaModalVisible] = useState(false);
 
   useEffect(() => {
     fetchUserID();
@@ -38,6 +42,9 @@ const ReportCrime = ({ navigation }) => {
     }
   };
 
+  
+
+
   const handleAddLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -51,7 +58,34 @@ const ReportCrime = ({ navigation }) => {
       Alert.alert('Error', 'Failed to get location.');
     }
   };
+  const handleOpenCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if(status !== 'granted'){
+      Alert.alert('Unable to open camera');
+      return;
+    }
+    setMediaModalVisible(false);
+    const result = await ImagePicker.launchCameraAsync();
+    if(!result.canceled) {
+      const asset = result.assets[0];
+      setAttachments([...attachments, { uri: asset.uri, name: asset.fileName || asset.uri.split('/').pop() }])
+    }
 
+  };
+
+  const handleOpenGallery = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if ( status !== 'granted') {
+      Alert.alert('Unable to open gallery.');
+      return;
+    }
+    setMediaModalVisible(false);
+    const result = await ImagePicker.launchImageLibraryAsync({ selectionLimit: 0});
+    if (!result.canceled){
+      const asset = result.assets[0];
+      setAttachments([...attachments, {uri: asset.uri, name: asset.fileName || asset.uri.split('/').pop() }]);
+    }
+  };
   const handleReportCrime = async () => {
     if (!crime || !description || !date) {
       Alert.alert('All fields are required.');
@@ -141,30 +175,40 @@ const ReportCrime = ({ navigation }) => {
               />
             </View>
           </View>
-          {/* --- LOCATION BUTTON --- */}
-          <TouchableOpacity
-            style={[
-              styles.locationButton,
-              !!location && { backgroundColor: '#FFD93B' },
-            ]}
-            onPress={handleAddLocation}
-            activeOpacity={0.85}
-          >
-            <MaterialIcons
-              name="place"
-              size={18}
-              color={location ? '#002949' : '#FFD93B'}
-              style={{ marginRight: 8 }}
-            />
-            <Text
+          <View style={styles.buttonsParent}>
+            {/* --- LOCATION BUTTON --- */}
+            <TouchableOpacity
               style={[
-                styles.locationButtonText,
-                location && { color: '#002949', fontWeight: 'bold' },
+                styles.locationButton,
+                !!location && { backgroundColor: '#FFD93B' },
               ]}
+              onPress={handleAddLocation}
+              activeOpacity={0.85}
             >
-              {location ? 'Location Added' : 'Add Location'}
-            </Text>
-          </TouchableOpacity>
+              <MaterialIcons
+                name="place"
+                size={18}
+                color={location ? '#002949' : '#FFD93B'}
+                style={{ marginRight: 8 }}
+              />
+              <Text
+                style={[
+                  styles.locationButtonText,
+                  location && { color: '#002949', fontWeight: 'bold' },
+                ]}
+              >
+                {location ? 'Location Added' : 'Add Location'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.attachmentsButton} onPress={() => setMediaModalVisible(true)}>
+                          <MaterialIcons name="upload"
+            size={18}
+            color='#FFD93B'
+            style={{ marginRight: 8 }} 
+            />
+                <Text style={styles.attachmentsButtonText}>Add Files</Text>
+            </TouchableOpacity>
+          </View>
           {location && (
             <Text style={styles.locationPill}>
               {`Lat: ${location.latitude.toFixed(5)}, Lng: ${location.longitude.toFixed(5)}`}
@@ -176,10 +220,36 @@ const ReportCrime = ({ navigation }) => {
             onPress={handleReportCrime}
             activeOpacity={0.92}
           >
+
             <Text style={styles.submitButtonText}>Submit Report</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+          {/* Modal for uploading media*/}
+      <Modal
+        visible={isMediaModalVisible}
+        transparent
+        animationType= 'fade'
+        onRequestClose={()=>setMediaModalVisible(false)}
+      >
+        <View style={styles.mediaModalOverlay}>
+          <View style={styles.mediaModalContent}>
+            {/* Add actual flatlist for displaying uploaded files*/}
+            <Text> Make this a flatlist for files</Text>
+            <View style={styles.modalOptionButtons}>
+              <TouchableOpacity style={[styles.optionButton, {marginRight: 20}]} onPress={handleOpenCamera} >
+      <Text style={styles.optionText}>Camera</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.optionButton}  onPress={handleOpenGallery} >
+      <Text style={styles.optionText}>Gallery</Text>
+    </TouchableOpacity>
+    </View>
+    <TouchableOpacity style={styles.cancelButton} onPress={()=> setMediaModalVisible(false)}>
+      <Text style={styles.cancelText}>Cancel</Text>
+    </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -293,6 +363,11 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginLeft: 3,
   },
+  buttonsParent: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+  },
   locationButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -307,6 +382,25 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   locationButtonText: {
+    color: '#FFD93B',
+    fontSize: 15.6,
+    fontWeight: '700',
+  },
+  attachmentsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    borderColor: '#FFD93B',
+    borderWidth: 2,
+    borderRadius: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginTop: 2,
+    marginBottom: 4,
+    marginLeft: 10,
+    alignSelf: 'center',
+  },
+  attachmentsButtonText: {
     color: '#FFD93B',
     fontSize: 15.6,
     fontWeight: '700',
@@ -343,6 +437,49 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 0.25,
   },
+  mediaModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',  // semi‑transparent dark backdrop
+    justifyContent: 'center',               // vertically center
+    alignItems: 'center',                   // horizontally center
+  },
+  mediaModalContent: {
+    width: '80%',               // box covers ~80% of screen width
+    padding: 20,
+    backgroundColor: '#FFF',    // white background for contrast
+    borderRadius: 12,
+    alignItems: 'stretch',      // children take full width
+  },
+  optionButton: {
+    width: 120,
+    paddingVertical: 12,
+    marginVertical: 4,
+    backgroundColor: '#022D3A',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  optionText: {
+    color: '#FFD93B',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    paddingVertical: 12,
+    marginTop: 10,
+    backgroundColor: '#DDD',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelText: {
+    color: '#333',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOptionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });
 
 export default ReportCrime;
