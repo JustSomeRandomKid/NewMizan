@@ -1,172 +1,205 @@
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { signOut } from 'firebase/auth';
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { auth } from '../../firebaseConfig.js'; // Add your firebase config path
-
+import {
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { auth } from '../../firebaseConfig.js';
 
 const IndexScreen = ({ navigation }) => {
-
-  const [user, setUser] = useState("Friend");  // State to hold user information
+  const [user, setUser] = useState("Friend");
 
   useEffect(() => {
-    // Get the current authenticated user
     const currentUser = auth.currentUser;
-    if(currentUser){
+    if (currentUser) {
       setUser(currentUser.displayName || currentUser.email || "User");
     }
   }, []);
 
-  const ReportPage = () => {
-    navigation.navigate("Report")
-  }
-  const logout = () => {
+  const handleReport = () => navigation.navigate("Report");
+
+  const handleLogout = () => {
     signOut(auth)
-    navigation.navigate("Main")
-  }
+      .then(() => navigation.navigate("Main"))
+      .catch((error) => console.error(error));
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={styles.screen}>
+      <StatusBar barStyle="light-content" />
+      
+      {/* Header */}
       <View style={styles.header}>
-        <View>
+        <LinearGradient
+          colors={['#143c4a', '#0a2c38']}
+          style={styles.banner}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
           <Text style={styles.userText}>Hello, {user}!</Text>
-          <Text style={styles.subtitle}>Welcome back to Mizan!</Text>
-        </View>
-        <TouchableOpacity style={styles.logout} onPress={logout}>
-          <Text style={styles.logoutText}>Logout</Text>
+          <Text style={styles.subtitle}>Welcome back to Mizan</Text>
+        </LinearGradient>
+
+        <TouchableOpacity onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={26} color="#ffd02b" />
         </TouchableOpacity>
       </View>
-      
-      <View style={styles.mainContent}>
-        <Text style={styles.title}>Report Incidents{'\n'}Build Trust</Text>
-        
-        <TouchableOpacity onPress={ReportPage} style={styles.buttonContainer}>
+
+      {/* Main Content */}
+      <View style={styles.content}>
+        <Text style={styles.title}>Report Incidents</Text>
+        <Text style={styles.tagline}>Build Trust</Text>
+
+        <TouchableOpacity
+          onPress={handleReport}
+          activeOpacity={0.9}
+          style={styles.buttonWrapper}
+        >
           <LinearGradient
-            colors={['#FFD700', '#FFA500', '#EEBA2B']}
+            colors={['#ffd02b', '#ffde59']}
             style={styles.buttonGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <View style={styles.buttonInner}>
-              <Text style={styles.buttonText}>Submit{'\n'}Report</Text>
-            </View>
+            <View style={styles.buttonAura} />
+            <LinearGradient
+              colors={['#143c4a', '#0a2c38']}
+              style={styles.buttonInner}
+            >
+              <Ionicons
+                name="alert"
+                size={84}
+                color="#ffd02b"
+                style={styles.iconDimmed}
+              />
+              <Text style={styles.buttonText}>Submit Report</Text>
+            </LinearGradient>
           </LinearGradient>
         </TouchableOpacity>
-        
-        <View style={styles.descriptionContainer}>
-          <Text style={styles.descriptionTitle}>How it works:</Text>
-          <Text style={styles.description}>
-            Help keep our community safe by reporting incidents quickly and securely.
-          </Text>
-          <Text style={styles.description}>
-            Your identity is protected while authorities get the information they need.
-          </Text>
-        </View>
+
+        <Text style={styles.description}>
+          Help keep our community safe by reporting incidents quickly and securely.
+        </Text>
       </View>
     </View>
   );
 };
 
+const BUTTON_SIZE = 200;
+const BUTTON_RADIUS = BUTTON_SIZE / 2;
+
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#04445F',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#0a2836',
-    padding: 20,
+    backgroundColor: '#0a2c38',
   },
   header: {
-    marginBottom: 40,
-    paddingTop: 20,
-    display: 'flex',
-    flexDirection: 'row'
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingHorizontal: 24,
+    paddingTop: 44,
+    paddingBottom: 16,
+  },
+  banner: {
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+    backgroundColor: '#123f4f',
   },
   userText: {
     color: '#fff',
     fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontWeight: '700',
   },
   subtitle: {
-    color: '#B0C4DE',
-    fontSize: 16,
-    fontWeight: '400',
+    color: '#ffd02b',
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 2,
   },
-  mainContent: {
+  content: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 20,
-  },
-  title: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    lineHeight: 36,
-    marginBottom: 20,
-  },
-  buttonContainer: {
-    marginVertical: 40,
-  },
-  buttonGradient: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    padding: 4, // This creates the gradient border
-    shadowColor: '#FFD700',
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowOpacity: 0.9,
-    shadowRadius: 25,
-    elevation: 20,
-  },
-  buttonInner: {
-    flex: 1,
-    backgroundColor: '#0a2836', // Same as background color
-    borderRadius: 66, // Slightly smaller to show gradient border
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  tagline: {
+    fontSize: 22,
+    color: '#ffd02b',
+    fontWeight: '600',
+    marginBottom: 32,
+  },
+  buttonWrapper: {
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
+    borderRadius: BUTTON_RADIUS,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 28,
+    shadowColor: '#ffd02b',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.55,
+    shadowRadius: 25,
+    elevation: 30,
+    position: 'relative',
+  },
+  buttonGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: BUTTON_RADIUS,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 6,
+    overflow: 'visible',
+  },
+  buttonAura: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: BUTTON_RADIUS,
+    backgroundColor: '#ffd02b22',
+    zIndex: 0,
+  },
+  buttonInner: {
+    width: '100%',
+    height: '100%',
+    borderRadius: BUTTON_RADIUS - 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ffd02b33',
+    zIndex: 1,
+    paddingHorizontal: 12,
+    paddingTop: 22, // pushes text higher
+  },
+  iconDimmed: {
+    opacity: 0.35,
+    marginBottom: 2, // less spacing below icon
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 18,
+    color: '#ffd02b',
+    fontSize: 24, // larger text
     fontWeight: 'bold',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  descriptionContainer: {
-    paddingHorizontal: 10,
-    marginBottom: 40,
-  },
-  descriptionTitle: {
-    color: '#FFD700',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 15,
+    marginTop: -8, // higher placement
   },
   description: {
-    color: '#E6E6FA',
-    fontSize: 16,
+    color: '#ffffffcc',
+    fontSize: 15.5,
+    lineHeight: 22,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    fontWeight: '500',
+    maxWidth: 280,
   },
-  logout: {
-    height:20,
-    width:50,
-    backgroundColor: 'red',
-    marginLeft:100,
-
-  },
-  logoutText: {
-    color:'white',
-  }
 });
 
 export default IndexScreen;

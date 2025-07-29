@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -22,7 +22,7 @@ const organizations = [
     image: require('../../assets/images/Figma/Rectangle (2).png'),
     logo: require('../../assets/images/Figma/Rectangle (5).png'),
     description: 'whatsapp: +972 053-924-052',
-    summary: 'The Mossawa Center, the Advocacy Center for Palestinian Arab citizens of Israel, was established in 1999 to promote the economic, social, cultural, and political rights of the Palestinian Arab minority in Israel and the recognition of this community as a national indigenous minority.',
+    summary: 'The Mossawa Center promotes economic, social, cultural, and political rights of Palestinian Arab citizens in Israel and advocates recognition as a national indigenous minority.',
   },
   {
     id: '2',
@@ -30,7 +30,7 @@ const organizations = [
     image: require('../../assets/images/Figma/Rectangle (3).png'),
     logo: require('../../assets/images/Figma/Rectangle (6).png'),
     description: 'whatsapp: +972 053-924-052',
-    summary: 'Sikkuy-Aufoq is a shared Jewish and Arab nonprofit organization that works to advance equality and partnership between the Arab-Palestinian citizens of Israel – descendants of those who remained within the Israeli borders after the founding of the state in 1948 – and the country’s Jewish citizens.',
+    summary: 'Sikkuy-Aufoq is a shared Jewish-Arab nonprofit advancing equality and partnership between Arab-Palestinian citizens and Jewish citizens of Israel.',
   },
   {
     id: '3',
@@ -38,23 +38,27 @@ const organizations = [
     image: require('../../assets/images/Figma/Rectangle (4).png'),
     logo: require('../../assets/images/Figma/Rectangle (7).png'),
     description: 'whatsapp: +972 053-924-052',
-    summary: 'Zazim is the largest campaigning community in Israel with over 400,000 members. We are a civic movement of Arabs and Jews, working together for democracy and equality and promoting active civic engagement. ',
+    summary: 'Zazim is a civic movement of Arabs and Jews in Israel, working for democracy and equality through campaigns with over 400,000 members.',
   },
 ];
 
-const OrganizationCarouselPage = ({navigation}) => {
+const OrganizationCarouselPage = ({ navigation }) => {
   const scrollX = useRef(new Animated.Value(0)).current;
   const [selectedOrg, setSelectedOrg] = useState(null);
   const flatListRef = useRef(null);
 
   const handleDotPress = (index) => {
-    flatListRef.current?.scrollToOffset({ offset: index * (CARD_WIDTH + SPACING), animated: true });
+    flatListRef.current?.scrollToOffset({
+      offset: index * (CARD_WIDTH + SPACING),
+      animated: true,
+    });
   };
 
   const openNGOChat = (NGO) => {
-    setSelectedOrg(NGO)
-    navigation.navigate("Messenger")
-  }
+    setSelectedOrg(NGO);
+    navigation.navigate('Messenger');
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.mainTitle}>Follow-Up Assistance</Text>
@@ -63,12 +67,13 @@ const OrganizationCarouselPage = ({navigation}) => {
         ref={flatListRef}
         data={organizations}
         horizontal
-        pagingEnabled={false}
         snapToInterval={CARD_WIDTH + SPACING}
         decelerationRate="fast"
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: SIDE_PADDING - (SPACING / 2) }}
+        contentContainerStyle={{
+          paddingHorizontal: SIDE_PADDING - SPACING / 2,
+        }}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { x: scrollX } } }],
           { useNativeDriver: true }
@@ -88,8 +93,11 @@ const OrganizationCarouselPage = ({navigation}) => {
           });
 
           return (
-            <Animated.View style={[styles.cardWrapper, { transform: [{ scale }] }]}> 
+            <Animated.View
+              style={[styles.cardWrapper, { transform: [{ scale }] }]}
+            >
               <Image source={item.image} style={styles.cardImage} />
+              <Text style={styles.cardTitle}>{item.name}</Text>
               <Text style={styles.summary}>{item.summary}</Text>
               <TouchableOpacity
                 style={styles.chatButton}
@@ -139,7 +147,9 @@ const OrganizationCarouselPage = ({navigation}) => {
             <View style={styles.modalContent}>
               <Image source={selectedOrg.logo} style={styles.logoSmall} />
               <Text style={styles.modalTitle}>{selectedOrg.name}</Text>
-              <Text style={styles.modalDescription}>{selectedOrg.description}</Text>
+              <Text style={styles.modalDescription}>
+                {selectedOrg.description}
+              </Text>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setSelectedOrg(null)}
@@ -163,24 +173,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mainTitle: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '700',
     color: '#FFDE59',
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 25,
   },
   cardWrapper: {
     width: CARD_WIDTH,
-    backgroundColor: '#075d75ff',
+    backgroundColor: '#064B5E',
     borderRadius: 24,
-    alignItems: 'center',
     padding: 20,
     marginHorizontal: SPACING / 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+    alignItems: 'center',
   },
   cardImage: {
     width: '100%',
@@ -188,18 +198,25 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: 15,
   },
-  summary: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFDE59',
+    marginBottom: 10,
     textAlign: 'center',
   },
+  summary: {
+    fontSize: 15,
+    color: '#E0E0E0',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 15,
+  },
   chatButton: {
-    marginTop: 20,
     backgroundColor: '#FFDE59',
     paddingVertical: 12,
-    paddingHorizontal: 45,
-    borderRadius: 25,
+    paddingHorizontal: 40,
+    borderRadius: 30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -208,13 +225,12 @@ const styles = StyleSheet.create({
   },
   chatButtonText: {
     fontSize: 16,
-    color: '#022D3A',
     fontWeight: 'bold',
+    color: '#022D3A',
   },
   indicatorContainer: {
     flexDirection: 'row',
     marginTop: 20,
-    alignItems: 'center',
     justifyContent: 'center',
   },
   indicatorTouchable: {
@@ -226,20 +242,20 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#FFDE59',
     borderWidth: 2,
-    borderColor: '#4c91a6ff',
+    borderColor: '#04445F',
     marginHorizontal: 5,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
   },
   modalContent: {
     width: screenWidth - 60,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
     borderRadius: 20,
-    padding: 25,
+    padding: 24,
     alignItems: 'center',
   },
   logoSmall: {
@@ -249,16 +265,16 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '700',
     color: '#022D3A',
     marginBottom: 10,
   },
   modalDescription: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#333',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 22,
     marginBottom: 20,
   },
   closeButton: {
@@ -268,7 +284,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   closeButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#FFDE59',
     fontWeight: '600',
   },
