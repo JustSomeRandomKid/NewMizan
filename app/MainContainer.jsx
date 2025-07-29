@@ -32,7 +32,7 @@ function MainContainer() {
             iconSource = focused 
               ? require('../assets/images/Figma/Vector-1.png') // Active state icon for Home
               : require('../assets/images/Figma/Vector (3).png'); // Inactive state icon for Home
-          } else if (route.name === 'Organizations') {
+          } else if (route.name === 'NGOs') {
             iconSource = focused 
               ? require('../assets/images/Figma/Vector (1).png') // Active state icon for Organizations
               : require('../assets/images/Figma/Vector-3.png'); // Inactive state icon for Organizations
@@ -44,6 +44,10 @@ function MainContainer() {
             iconSource = focused 
               ? require('../assets/images/Figma/Vector (2).png') // Active state icon for My Cases
               : require('../assets/images/Figma/Vector.png'); // Inactive state icon for My Cases
+          } else if (route.name === 'Messenger') {
+            iconSource = focused 
+              ? require('../assets/images/Figma/message.png') // Active state icon for My Cases
+              : require('../assets/images/Figma/message.png'); // Inactive state icon for My Cases
           }
 
           // Render the icon using the selected icon source
@@ -59,7 +63,7 @@ function MainContainer() {
     >
       {/* Define the tabs and the components that are displayed for each tab */}
       <Tab.Screen name="Home" component={IndexScreen} />
-      <Tab.Screen name="Organizations" component={Organizations} />
+      <Tab.Screen name="NGOs" component={Organizations} />
       <Tab.Screen name="Resources" component={MyRights} />
       <Tab.Screen name="My Cases" component={MyCases} />
       <Tab.Screen name ="Messenger" component={Messenger} />
