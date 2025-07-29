@@ -20,10 +20,30 @@ const ReportCrime = ({ navigation }) => {
   const [date, setDate] = useState('');
   const [victimID, setVictimID] = useState('');
   const [location, setLocation] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const crimeOptions = [
+    'Domestic Violence',
+    'Sexual Harassment / Assault',
+    'Police Misconduct',
+    'LGBTQ+ Harassment',
+    'Hate Crime',
+    'Violent Crime',
+    'Other',
+  ];
 
   useEffect(() => {
     fetchUserID();
+    setDate(getTodayDate());  // Set date to today on load
   }, []);
+
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = (today.getMonth() + 1).toString().padStart(2, '0'); // months are 0-based
+    const day = today.getDate().toString().padStart(2, '0');
+    return `${day}/${month}/${year}`;
+  };
 
   const fetchUserID = async () => {
     try {
@@ -76,8 +96,9 @@ const ReportCrime = ({ navigation }) => {
       navigation.navigate('MyCases');
       setCrime('');
       setDescription('');
-      setDate('');
+      setDate(getTodayDate());  // Reset date to today after submit
       setLocation(null);
+      setDropdownOpen(false);
     } catch (error) {
       Alert.alert('Error', 'Failed to report crime. Please try again.');
     }
@@ -85,36 +106,82 @@ const ReportCrime = ({ navigation }) => {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.outer}>
+      <ScrollView
+        contentContainerStyle={styles.outer}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.headerWrap}>
           <View style={styles.iconCircle}>
             <FontAwesome5 name="shield-alt" size={28} color="#FFD93B" />
           </View>
           <Text style={styles.pageTitle}>Report a Crime</Text>
           <Text style={styles.pageSubtitle}>
-            Your report helps us make a difference. Please fill out the details below.
+            Your report helps us make a difference. Please fill out the details
+            below.
           </Text>
         </View>
         <View style={styles.card}>
           {/* --- TYPE OF CRIME --- */}
           <View style={styles.inputBlock}>
             <Text style={styles.label}>Type of Crime</Text>
-            <View style={styles.inputRow}>
-              <MaterialIcons name="report" size={22} color="#FFD93B" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={crime}
-                onChangeText={setCrime}
-                placeholder="e.g. Theft, Assault"
-                placeholderTextColor="#B5B9C7"
+            <View
+              style={[styles.inputRow, { justifyContent: 'space-between' }]}
+            >
+              <MaterialIcons
+                name="report"
+                size={22}
+                color="#FFD93B"
+                style={styles.inputIcon}
               />
+              <TouchableOpacity
+                style={styles.simpleDropdown}
+                onPress={() => setDropdownOpen(!dropdownOpen)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.dropdownText,
+                    !crime && { color: '#B5B9C7' },
+                  ]}
+                >
+                  {crime || 'Select a category...'}
+                </Text>
+                <MaterialIcons
+                  name={dropdownOpen ? 'arrow-drop-up' : 'arrow-drop-down'}
+                  size={24}
+                  color="#FFD93B"
+                />
+              </TouchableOpacity>
             </View>
+
+            {dropdownOpen && (
+              <View style={styles.dropdownList}>
+                {crimeOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setCrime(option);
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    <Text style={styles.dropdownItemText}>{option}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
+
           {/* --- DESCRIPTION --- */}
           <View style={styles.inputBlock}>
             <Text style={styles.label}>Description</Text>
             <View style={[styles.inputRow, styles.multilineRow]}>
-              <MaterialIcons name="description" size={22} color="#FFD93B" style={styles.inputIcon} />
+              <MaterialIcons
+                name="description"
+                size={22}
+                color="#FFD93B"
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={[styles.input, styles.multilineInput]}
                 value={description}
@@ -127,11 +194,17 @@ const ReportCrime = ({ navigation }) => {
             </View>
             <Text style={styles.helperText}>Be as specific as you can.</Text>
           </View>
+
           {/* --- DATE --- */}
           <View style={styles.inputBlock}>
             <Text style={styles.label}>Date</Text>
             <View style={styles.inputRow}>
-              <MaterialIcons name="calendar-today" size={20} color="#FFD93B" style={styles.inputIcon} />
+              <MaterialIcons
+                name="calendar-today"
+                size={20}
+                color="#FFD93B"
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.input}
                 value={date}
@@ -141,12 +214,10 @@ const ReportCrime = ({ navigation }) => {
               />
             </View>
           </View>
+
           {/* --- LOCATION BUTTON --- */}
           <TouchableOpacity
-            style={[
-              styles.locationButton,
-              !!location && { backgroundColor: '#FFD93B' },
-            ]}
+            style={[styles.locationButton, !!location && { backgroundColor: '#FFD93B' }]}
             onPress={handleAddLocation}
             activeOpacity={0.85}
           >
@@ -165,11 +236,13 @@ const ReportCrime = ({ navigation }) => {
               {location ? 'Location Added' : 'Add Location'}
             </Text>
           </TouchableOpacity>
+
           {location && (
             <Text style={styles.locationPill}>
               {`Lat: ${location.latitude.toFixed(5)}, Lng: ${location.longitude.toFixed(5)}`}
             </Text>
           )}
+
           {/* --- SUBMIT BUTTON --- */}
           <TouchableOpacity
             style={styles.submitButton}
@@ -254,18 +327,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FDFDFD',
     borderRadius: 12,
-    borderWidth: 0,
-    marginBottom: 0,
     paddingHorizontal: 10,
-    // subtle shadow for depth
     ...Platform.select({
       ios: { shadowColor: '#FFD93B', shadowOpacity: 0.09, shadowRadius: 8 },
       android: { elevation: 3 },
     }),
   },
-  multilineRow: {
-    alignItems: 'flex-start',
-    paddingTop: 10,
+  simpleDropdown: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FDFDFD',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+  },
+  dropdownText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#002949',
+  },
+  dropdownList: {
+    backgroundColor: '#FDFDFD',
+    borderRadius: 12,
+    marginTop: 5,
+    maxHeight: 300,
+    borderWidth: 1,
+    borderColor: '#FFD93B',
+    shadowColor: '#FFD93B',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  dropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#002949',
   },
   inputIcon: {
     marginTop: 2,
@@ -280,6 +383,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderRadius: 0,
     fontWeight: '500',
+  },
+  multilineRow: {
+    alignItems: 'flex-start',
+    paddingTop: 10,
   },
   multilineInput: {
     height: 92,
