@@ -23,6 +23,7 @@ function MainContainer() {
     <Tab.Navigator
       initialRouteName="Home" // Set the initial screen when the app loads
       screenOptions={({ route }) => ({
+        headerShown: false,
         // Define the tab bar icon for each screen
         tabBarIcon: ({ focused, color, size }) => {
           let iconSource;

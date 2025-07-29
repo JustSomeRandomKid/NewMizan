@@ -4,7 +4,7 @@ import Navigation from './Navigation'; // Stack navigator with login & tabs
 const RootLayout = () => {
   return (
     // Renders the navigation structure defined in the Navigation component
-    <Navigation />
+    <Navigation screenOptions={{ headerShown: false }} />
   );
 };
 
