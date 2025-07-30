@@ -1,15 +1,15 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Image, StyleSheet } from 'react-native'; // Import StyleSheet for styling components
+import { Image, StyleSheet } from 'react-native';
 import IndexScreen from './screens/index';
 import Messenger from './screens/Messenger';
 import MyCases from './screens/MyCases';
 import MyRights from './screens/MyRights';
 import Organizations from './screens/Organizations';
 
-// Create a Bottom Tab Navigator instance
+
 const Tab = createBottomTabNavigator();
 
-// Define styles for the tab icons
+
 const styles = StyleSheet.create({
   icon: {
     width: 25,
@@ -17,52 +17,50 @@ const styles = StyleSheet.create({
   },
 });
 
-// Main container for the tab navigation
 function MainContainer() {
   return (
     <Tab.Navigator
-      initialRouteName="Home" // Set the initial screen when the app loads
+      initialRouteName="Home" 
       screenOptions={({ route }) => ({
         headerShown: false,
-        // Define the tab bar icon for each screen
+        
         tabBarIcon: ({ focused, color, size }) => {
           let iconSource;
 
-          // Set icons based on the route name and whether the tab is focused
+          
           if (route.name === 'Home') {
             iconSource = focused 
-              ? require('../assets/images/Figma/Vector-1.png') // Active state icon for Home
-              : require('../assets/images/Figma/Vector (3).png'); // Inactive state icon for Home
+              ? require('../assets/images/Figma/Vector-1.png') 
+              : require('../assets/images/Figma/Vector (3).png'); 
           } else if (route.name === 'NGOs') {
             iconSource = focused 
-              ? require('../assets/images/Figma/Vector (1).png') // Active state icon for Organizations
-              : require('../assets/images/Figma/Vector-3.png'); // Inactive state icon for Organizations
+              ? require('../assets/images/Figma/Vector (1).png')
+              : require('../assets/images/Figma/Vector-3.png'); 
           } else if (route.name === 'Resources') {
             iconSource = focused 
-              ? require('../assets/images/Figma/Vector (4).png') // Active state icon for Resources
-              : require('../assets/images/Figma/Vector-2.png'); // Inactive state icon for Resources
+              ? require('../assets/images/Figma/Vector (4).png') 
+              : require('../assets/images/Figma/Vector-2.png'); 
           } else if (route.name === 'My Cases') {
             iconSource = focused 
-              ? require('../assets/images/Figma/Vector (2).png') // Active state icon for My Cases
-              : require('../assets/images/Figma/Vector.png'); // Inactive state icon for My Cases
+              ? require('../assets/images/Figma/Vector (2).png') 
+              : require('../assets/images/Figma/Vector.png');
           } else if (route.name === 'Messenger') {
             iconSource = focused 
-              ? require('../assets/images/Figma/message.png') // Active state icon for My Cases
-              : require('../assets/images/Figma/message.png'); // Inactive state icon for My Cases
+              ? require('../assets/images/Figma/message.png')
+              : require('../assets/images/Figma/message.png'); 
           }
 
-          // Render the icon using the selected icon source
+          
           return <Image source={iconSource} style={styles.icon} />;
         },
-        // Customizing the appearance of the tab bar
+        
         tabBarStyle: {
-          backgroundColor: '#04445F', // Set background color of the tab bar
+          backgroundColor: '#04445F', 
         },
-        tabBarActiveTintColor: '#EAB82C', // Set color for the active tab
-        tabBarInactiveTintColor: 'gray', // Set color for the inactive tabs
+        tabBarActiveTintColor: '#EAB82C', 
+        tabBarInactiveTintColor: 'gray', 
       })}
     >
-      {/* Define the tabs and the components that are displayed for each tab */}
       <Tab.Screen name="Home" component={IndexScreen} />
       <Tab.Screen name="NGOs" component={Organizations} />
       <Tab.Screen name="Resources" component={MyRights} />

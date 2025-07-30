@@ -2,8 +2,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { auth } from '../firebaseConfig.js'; // Your firebase config
-import MainContainer from './MainContainer'; // Import the tab navigator
+import { auth } from '../firebaseConfig.js';
+import MainContainer from './MainContainer';
 import LoginScreen from './screens/Login';
 import messenger from './screens/Messenger';
 import ReportCrime from './screens/ReportScreen';
@@ -21,10 +21,10 @@ const Navigation = () => {
       setIsLoading(false);
     });
 
-    return unsubscribe; // Cleanup subscription on unmount
+    return unsubscribe; 
   }, []);
 
-  // Show loading spinner while checking auth state
+  
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -39,7 +39,7 @@ const Navigation = () => {
       screenOptions={{ headerShown: false }}
     >
       {user ? (
-        // Screens for authenticated users
+        
         <>
           <Stack.Screen name="Main" component={MainContainer}  />
           <Stack.Screen name="Messenger" component={messenger} />
@@ -47,7 +47,7 @@ const Navigation = () => {
 
         </>
       ) : (
-        // Screens for non-authenticated users
+        
         <>
           <Stack.Screen name="Signup" component={SignupScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
