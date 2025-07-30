@@ -152,10 +152,10 @@ const ReportCrime = ({ navigation }) => {
         status: 'pending',
       });
       Alert.alert('Success', 'Crime reported successfully!');
-      navigation.navigate('MyCases');
+
       setCrime('');
       setDescription('');
-      setDate(getTodayDate());  // Reset date to today after submit
+      setDate(getTodayDate()); 
       setLocation(null);
       setDropdownOpen(false);
     } catch (error) {
@@ -323,12 +323,25 @@ const ReportCrime = ({ navigation }) => {
 
           {/* --- SUBMIT BUTTON --- */}
           <TouchableOpacity
-            style={styles.submitButton}
-            onPress={handleReportCrime}
-            activeOpacity={0.92}
-          >
+  onPress={handleReportCrime}
+  activeOpacity={0.92}
+  style={{
+    backgroundColor: '#FFD93B',
+    borderRadius: 23,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 28,
+    width: '90%',
+    alignSelf: 'center',
+    shadowColor: '#FFD93B',
+    shadowOpacity: 0.09,
+    shadowRadius: 8,
+    elevation: 4,
+  }}
+>
 
-            <Text style={styles.submitButtonText}>Submit Report</Text>
+            <Text style={{ color: '#002949', fontSize: 18, fontWeight: '900' }}>Submit Report</Text>
+
           </TouchableOpacity>
         </View>
       </ScrollView>

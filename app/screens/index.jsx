@@ -138,36 +138,49 @@ const IndexScreen = ({ navigation }) => {
 
         <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
           <TouchableOpacity
-            onPress={handleReport}
-            activeOpacity={0.82}
-            style={styles.touchableButton}
-          >
-            {/* Outer ring */}
-            <LinearGradient
-              colors={['#ffd02baa', 'rgba(10,44,56,0.85)', 'transparent']}
-              style={styles.buttonRing}
-              start={{ x: 0.5, y: 0.5 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <BlurView intensity={65} tint="dark" style={styles.buttonGlass}>
-                {/* Solid button using main color */}
-                <View style={styles.buttonGradient}>
-                  <Ionicons
-                    name="document-text-outline"
-                    size={76}
-                    color="#fff"
-                    style={{
-                      opacity: 0.65,
-                      textShadowColor: '#ffd02baa',
-                      textShadowRadius: 13,
-                      textShadowOffset: { width: 0, height: 2 },
-                    }}
-                  />
-                  <Text style={styles.buttonText}>REPORT</Text>
-                </View>
-              </BlurView>
-            </LinearGradient>
-          </TouchableOpacity>
+  activeOpacity={1}
+  onPressIn={() => {
+    Animated.spring(bounceAnim, {
+      toValue: 0.94,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 6,
+    }).start();
+  }}
+  onPressOut={() => {
+    Animated.spring(bounceAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 6,
+    }).start(() => handleReport());
+  }}
+  style={styles.touchableButton}
+>
+  <LinearGradient
+    colors={['#ffd02baa', 'rgba(10,44,56,0.85)', 'transparent']}
+    style={styles.buttonRing}
+    start={{ x: 0.5, y: 0.5 }}
+    end={{ x: 1, y: 1 }}
+  >
+    <BlurView intensity={65} tint="dark" style={styles.buttonGlass}>
+      <View style={styles.buttonGradient}>
+        <Ionicons
+          name="document-text-outline"
+          size={76}
+          color="#fff"
+          style={{
+            opacity: 0.65,
+            textShadowColor: '#ffd02baa',
+            textShadowRadius: 13,
+            textShadowOffset: { width: 0, height: 2 },
+          }}
+        />
+        <Text style={styles.buttonText}>REPORT</Text>
+      </View>
+    </BlurView>
+  </LinearGradient>
+</TouchableOpacity>
         </Animated.View>
       </View>
     </LinearGradient>
