@@ -67,10 +67,13 @@ const PlacesMap = () => {
       const snapshot = await getDocs(collection(db, "hospital"));
       const formattedPlaces = snapshot.docs.map((doc) => {
         const data = doc.data();
+        const loc = data.loc; // assumed to be GeoPoint or object with lat/lng
         return {
-          lat: parseFloat(data.latitude),
-          lon: parseFloat(data.longitude),
           name: doc.id,
+          loc: {
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+          },
           crimeTypes: data.crimeTypes || [],
           image: data.image || "https://via.placeholder.com/400x200",
           status: data.status || "Open",
@@ -104,15 +107,15 @@ const PlacesMap = () => {
       <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={() => handleCategorySelect("hospital")}
           style={[styles.categoryButtonWrap, {backgroundColor: '#e26f6f'} ]}>
-          <Text style={styles.categoryButton}>🏥 Hospitals</Text>
+          <Text style={styles.categoryButton}>Hospitals</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.categoryButtonWrap, {backgroundColor: 'grey'} ]}>
-          <Text style={styles.categoryButton}>🏠 Shelters</Text>
+          <Text style={styles.categoryButton}>Shelters</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.categoryButtonWrap, {backgroundColor: '#2596be'} ]}>
-          <Text style={styles.categoryButton}>🛡️ Police</Text>
+          <Text style={styles.categoryButton}>Police</Text>
         </TouchableOpacity>
       </View>
 
@@ -127,14 +130,17 @@ const PlacesMap = () => {
           {places.map((place, index) => (
             <Marker
               key={index}
-              coordinate={{ latitude: place.lat, longitude: place.lon }}
+              coordinate={{
+                latitude: place.loc.latitude,
+                longitude: place.loc.longitude,
+              }}
               title={place.name}
               onPress={() => {
                 const distance = calculateDistance(
                   region.latitude,
                   region.longitude,
-                  place.lat,
-                  place.lon
+                  place.loc.latitude,
+                  place.loc.longitude
                 );
                 setSelectedPlace({ ...place, distance });
               }}
@@ -155,7 +161,6 @@ const PlacesMap = () => {
               <Text style={styles.newBadgeText}>New</Text>
             </View>
           )}
-          {/*<Image source={{ uri: selectedPlace.image }} style={styles.cardImage} />*/}
           <Image source={require('../../assets/images/hadassah_ek.jpg')} style={styles.cardImage}/>
           <View style={styles.cardContent}>
             <Text style={styles.resourceTitle}>{selectedPlace.name}</Text>
@@ -164,7 +169,7 @@ const PlacesMap = () => {
           </View>
 
           <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.mapsButton} onPress={() => openInMaps(selectedPlace.lat, selectedPlace.lon)}>
+            <TouchableOpacity style={styles.mapsButton} onPress={() => openInMaps(selectedPlace.loc.latitude, selectedPlace.loc.longitude)}>
               <Text style={styles.mapsButtonText}>Open in Maps</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.closeButton} onPress={() => setSelectedPlace(null)}>
