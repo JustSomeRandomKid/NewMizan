@@ -1,9 +1,12 @@
 import { useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Dimensions,
   Image,
+  Linking,
   Modal,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,7 +14,7 @@ import {
 } from 'react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
-const CARD_WIDTH = screenWidth * 0.78; // Smaller width to reveal adjacent cards
+const CARD_WIDTH = screenWidth * 0.78;
 const SIDE_PADDING = (screenWidth - CARD_WIDTH) / 2;
 const SPACING = 20;
 
@@ -42,6 +45,30 @@ const organizations = [
   },
 ];
 
+const lawyers = [
+  {
+    id: 'lawyer1',
+    name: 'Adv. Sarah Chen',
+    specialty: 'Human Rights Law',
+    contact: 'sarah.chen@lawfirm.com',
+    contactType: 'email',
+  },
+  {
+    id: 'lawyer2',
+    name: 'Adv. Omar Said',
+    specialty: 'Civil Rights & Discrimination',
+    contact: '1-800-555-0102',
+    contactType: 'phone',
+  },
+  {
+    id: 'lawyer3',
+    name: 'Adv. Yael Levi',
+    specialty: 'Immigration & Refugee Law',
+    contact: 'yael.levi@lawfirm.com',
+    contactType: 'email',
+  },
+];
+
 const OrganizationCarouselPage = ({ navigation }) => {
   const scrollX = useRef(new Animated.Value(0)).current;
   const [selectedOrg, setSelectedOrg] = useState(null);
@@ -55,13 +82,45 @@ const OrganizationCarouselPage = ({ navigation }) => {
   };
 
   const openNGOChat = (NGO) => {
-    setSelectedOrg(NGO);
-    navigation.navigate('Messenger');
+    navigation.navigate('Messenger', { ngoId: NGO.id, ngoName: NGO.name });
+  };
+
+  const handleContactPress = (lawyer) => {
+    let url = '';
+    if (lawyer.contactType === 'email') {
+      url = `mailto:${lawyer.contact}`;
+    } else if (lawyer.contactType === 'phone') {
+      url = `tel:${lawyer.contact}`;
+    }
+
+    Alert.alert(
+      `Contact ${lawyer.name}`,
+      `You are about to contact ${lawyer.name} regarding their specialty in ${lawyer.specialty}.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Proceed',
+          onPress: async () => {
+            const supported = await Linking.canOpenURL(url);
+            if (supported) {
+              await Linking.openURL(url);
+            } else {
+              Alert.alert(`Error`, `Unable to handle this request.`);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: '#022D3A' }}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
       <Text style={styles.mainTitle}>Follow-Up Assistance</Text>
+      <Text style={styles.subTitle}>Connect with support organizations</Text>
 
       <Animated.FlatList
         ref={flatListRef}
@@ -85,32 +144,23 @@ const OrganizationCarouselPage = ({ navigation }) => {
             index * (CARD_WIDTH + SPACING),
             (index + 1) * (CARD_WIDTH + SPACING),
           ];
-
           const scale = scrollX.interpolate({
             inputRange,
             outputRange: [0.92, 1, 0.92],
             extrapolate: 'clamp',
           });
-
           return (
-            <Animated.View
-              style={[styles.cardWrapper, { transform: [{ scale }] }]}
-            >
+            <Animated.View style={[styles.cardWrapper, { transform: [{ scale }] }]}>
               <Image source={item.image} style={styles.cardImage} />
               <Text style={styles.cardTitle}>{item.name}</Text>
               <Text style={styles.summary}>{item.summary}</Text>
-              <TouchableOpacity
-                style={styles.chatButton}
-                onPress={() => openNGOChat(item)}
-                activeOpacity={0.85}
-              >
+              <TouchableOpacity style={styles.chatButton} onPress={() => openNGOChat(item)} activeOpacity={0.85}>
                 <Text style={styles.chatButtonText}>Chat</Text>
               </TouchableOpacity>
             </Animated.View>
           );
         }}
       />
-
       <View style={styles.indicatorContainer}>
         {organizations.map((_, index) => {
           const opacity = scrollX.interpolate({
@@ -122,18 +172,31 @@ const OrganizationCarouselPage = ({ navigation }) => {
             outputRange: [0.3, 1, 0.3],
             extrapolate: 'clamp',
           });
-
           return (
-            <TouchableOpacity
-              key={index}
-              onPress={() => handleDotPress(index)}
-              activeOpacity={0.7}
-              style={styles.indicatorTouchable}
-            >
+            <TouchableOpacity key={index} onPress={() => handleDotPress(index)} activeOpacity={0.7} style={styles.indicatorTouchable}>
               <Animated.View style={[styles.indicator, { opacity }]} />
             </TouchableOpacity>
           );
         })}
+      </View>
+
+      <View style={styles.lawyerSection}>
+        <Text style={styles.sectionTitle}>Legal Professionals</Text>
+        <Text style={styles.subTitle}>Get help from qualified lawyers</Text>
+        {lawyers.map((lawyer) => (
+          <View key={lawyer.id} style={styles.lawyerCard}>
+            <View>
+              <Text style={styles.lawyerName}>{lawyer.name}</Text>
+              <Text style={styles.lawyerSpecialty}>{lawyer.specialty}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.contactButton}
+              onPress={() => handleContactPress(lawyer)}
+            >
+              <Text style={styles.contactButtonText}>Contact</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
       </View>
 
       {selectedOrg && (
@@ -161,30 +224,35 @@ const OrganizationCarouselPage = ({ navigation }) => {
           </View>
         </Modal>
       )}
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#022D3A',
     paddingTop: 50,
     alignItems: 'center',
+    paddingBottom: 50,
   },
   mainTitle: {
     fontSize: 26,
     fontWeight: '700',
     color: '#FFDE59',
     textAlign: 'center',
+  },
+  subTitle: {
+    fontSize: 16,
+    color: '#B0C4DE',
+    textAlign: 'center',
     marginBottom: 25,
+    marginTop: 4,
   },
   cardWrapper: {
     width: CARD_WIDTH,
     backgroundColor: '#064B5E',
     borderRadius: 24,
     padding: 20,
-    marginHorizontal: SPACING / 3, // slightly less margin to reveal more of the sides
+    marginHorizontal: SPACING / 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -232,6 +300,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 20,
     justifyContent: 'center',
+    marginBottom: 40,
   },
   indicatorTouchable: {
     padding: 6,
@@ -244,6 +313,52 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#04445F',
     marginHorizontal: 5,
+  },
+  lawyerSection: {
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFDE59',
+    textAlign: 'center',
+  },
+  lawyerCard: {
+    backgroundColor: '#064B5E',
+    borderRadius: 12,
+    padding: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  lawyerName: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  lawyerSpecialty: {
+    fontSize: 14,
+    color: '#B0C4DE',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  contactButton: {
+    backgroundColor: '#1E6A81',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  contactButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FFDE59',
   },
   modalContainer: {
     flex: 1,
