@@ -1,8 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { signOut } from 'firebase/auth';
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
+  Platform,
   StatusBar,
   StyleSheet,
   Text,
@@ -11,183 +14,337 @@ import {
 } from 'react-native';
 import { auth } from '../../firebaseConfig.js';
 
+
 const IndexScreen = ({ navigation }) => {
-  const [user, setUser] = useState("Friend");
+  const [user, setUser] = useState('Friend');
+  const glowAnim = useRef(new Animated.Value(1)).current;
+  const bounceAnim = useRef(new Animated.Value(1)).current;
+
 
   useEffect(() => {
     const currentUser = auth.currentUser;
     if (currentUser) {
-      setUser(currentUser.displayName || currentUser.email || "User");
+      setUser(currentUser.displayName || currentUser.email || 'User');
     }
+
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, {
+          toValue: 1.18,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
   }, []);
 
-  const handleReport = () => navigation.navigate("Report");
+
+  const handleReport = () => {
+    // bounce animation
+    Animated.sequence([
+      Animated.spring(bounceAnim, {
+        toValue: 1.06,
+        friction: 3,
+        tension: 60,
+        useNativeDriver: true,
+      }),
+      Animated.spring(bounceAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+
+    // navigate immediately on single tap
+    navigation.navigate('Report');
+  };
+
 
   const handleLogout = () => {
     signOut(auth)
-      .then(() => navigation.navigate("Main"))
+      .then(() => navigation.navigate('Main'))
       .catch((error) => console.error(error));
   };
 
+
   return (
-    <View style={styles.screen}>
+    <LinearGradient
+      colors={['#0a2c38', '#112b3c']}
+      style={styles.screen}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
       <StatusBar barStyle="light-content" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <LinearGradient
-          colors={['#143c4a', '#0a2c38']}
-          style={styles.banner}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <Text style={styles.userText}>Hello, {user}!</Text>
-          <Text style={styles.subtitle}>Welcome back to Mizan</Text>
-        </LinearGradient>
 
-        <TouchableOpacity onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={26} color="#ffd02b" />
-        </TouchableOpacity>
+
+      {/* Banner Header */}
+      <LinearGradient
+        colors={['#143c4a', '#157798ee', '#112b3c']}
+        start={{ x: 0.07, y: 0.2 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.bannerGradient}
+      >
+        <BlurView intensity={50} tint="dark" style={styles.headerBox}>
+          <View style={styles.headerLeft}>
+            <Ionicons name="shield-checkmark-outline" size={28} color="#ffd02b" />
+            <View>
+              <Text numberOfLines={1} style={styles.helloText}>
+                Hello, {user} 👋
+              </Text>
+              <Text style={styles.subText}>You’re Safe at MIZAN</Text>
+            </View>
+          </View>
+          <TouchableOpacity onPress={handleLogout} hitSlop={12}>
+            <Ionicons name="log-out-outline" size={26} color="#ffd02b" />
+          </TouchableOpacity>
+        </BlurView>
+      </LinearGradient>
+
+
+      {/* Stats Row */}
+      <View style={styles.stats}>
+        <Stat icon="document-text-outline" text="3,000" description="Reports" />
+        <Stat icon="checkmark-circle-outline" text="92%" description="Resolved" />
+        <Stat icon="time-outline" text="24h" description="Avg Time" />
       </View>
 
-      {/* Main Content */}
-      <View style={styles.content}>
-        <Text style={styles.title}>Report Incidents</Text>
-        <Text style={styles.tagline}>Build Trust</Text>
 
-        <TouchableOpacity
-          onPress={handleReport}
-          activeOpacity={0.9}
-          style={styles.buttonWrapper}
-        >
-          {/* The outer gradient now acts more like a subtle bevel */}
-          <LinearGradient
-            colors={['#ffd02b', '#ffde59']}
-            style={styles.buttonGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+      <Text style={styles.tagline}>Building trust, one case at a time</Text>
+
+
+      {/* Report Button */}
+      <View style={styles.buttonArea}>
+        {/* Glow behind button */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.glowCircle,
+            {
+              transform: [{ scale: glowAnim }],
+              opacity: glowAnim.interpolate({
+                inputRange: [1, 1.18],
+                outputRange: [0.18, 0.33],
+              }),
+            },
+          ]}
+        />
+
+
+        <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
+          <TouchableOpacity
+            onPress={handleReport}
+            activeOpacity={0.82}
+            style={styles.touchableButton}
           >
-            {/* The main button face is now lighter and has a top highlight */}
+            {/* Outer ring */}
             <LinearGradient
-              colors={['#2a5a6a', '#1a4c5a']} // CHANGE 1: Lighter, more vibrant blue/teal gradient
-              style={styles.buttonInner}
+              colors={['#ffd02baa', 'rgba(10,44,56,0.85)', 'transparent']}
+              style={styles.buttonRing}
+              start={{ x: 0.5, y: 0.5 }}
+              end={{ x: 1, y: 1 }}
             >
-              <Ionicons name="shield-checkmark-outline" size={48} color="#ffd02b" style={styles.iconDimmed} />
-              <Text style={styles.buttonText}>Submit Report</Text>
+              <BlurView intensity={65} tint="dark" style={styles.buttonGlass}>
+                {/* Solid button using main color */}
+                <View style={styles.buttonGradient}>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={76}
+                    color="#fff"
+                    style={{
+                      opacity: 0.65,
+                      textShadowColor: '#ffd02baa',
+                      textShadowRadius: 13,
+                      textShadowOffset: { width: 0, height: 2 },
+                    }}
+                  />
+                  <Text style={styles.buttonText}>REPORT</Text>
+                </View>
+              </BlurView>
             </LinearGradient>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        <Text style={styles.description}>
-          Help keep our community safe by reporting incidents quickly and securely.
-        </Text>
+          </TouchableOpacity>
+        </Animated.View>
       </View>
-    </View>
+    </LinearGradient>
   );
 };
 
-const BUTTON_SIZE = 200;
-const BUTTON_RADIUS = BUTTON_SIZE / 2;
+
+const Stat = ({ icon, text, description }) => (
+  <BlurView intensity={48} tint="dark" style={styles.statCard}>
+    <Ionicons name={icon} size={25} color="#ffd02b" style={{ marginBottom: 2 }} />
+    <Text style={styles.statValue}>{text}</Text>
+    <Text style={styles.statDesc}>{description}</Text>
+  </BlurView>
+);
+
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#0a2c38',
+    paddingTop: Platform.OS === 'android' ? 36 : 52,
+    paddingHorizontal: 18,
+    backgroundColor: '#100c24',
   },
-  header: {
+  bannerGradient: {
+    borderRadius: 23,
+    marginBottom: 18,
+    shadowColor: '#113c4a8a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+  },
+  headerBox: {
+    flexDirection: 'row',
+    borderRadius: 23,
+    padding: 18,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#183c4ad8',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 13,
+  },
+  helloText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 22,
+    letterSpacing: 0.1,
+  },
+  subText: {
+    color: '#ffd02b',
+    fontWeight: '500',
+    fontSize: 13,
+    marginTop: -2,
+    letterSpacing: 0.03,
+  },
+  stats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    paddingHorizontal: 24,
-    paddingTop: 44,
-    paddingBottom: 16,
+    marginBottom: 10,
+    width: '100%',
+    gap: 8,
   },
-  banner: {
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 16,
-    backgroundColor: '#123f4f',
-  },
-  userText: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  subtitle: {
-    color: '#ffd02b',
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  content: {
+  statCard: {
     flex: 1,
+    borderRadius: 20,
+    padding: 11,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
+    backgroundColor: '#ffffff13',
+    borderWidth: 0.7,
+    borderColor: '#fff1',
+    shadowColor: '#ffd02baa',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.13,
+    shadowRadius: 6,
+    marginVertical: 3,
   },
-  title: {
-    fontSize: 30,
-    fontWeight: '800',
-    color: '#fff',
-    marginBottom: 4,
+  statValue: {
+    color: '#ffd02b',
+    fontWeight: 'bold',
+    fontSize: 16.5,
+    marginBottom: -1,
+    textShadowColor: '#0002',
+    textShadowRadius: 3,
+  },
+  statDesc: {
+    color: '#dce6ea',
+    fontSize: 11.7,
+    fontWeight: '600',
+    letterSpacing: 0.04,
+    textAlign: 'center',
   },
   tagline: {
-    fontSize: 22,
-    color: '#ffd02b',
-    fontWeight: '600',
-    marginBottom: 40, // Increased margin
+    color: '#bdc7d3',
+    fontSize: 15,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginBottom: 28,
+    textShadowColor: '#0003',
+    textShadowRadius: 3,
   },
-  buttonWrapper: {
-    width: BUTTON_SIZE,
-    height: BUTTON_SIZE,
-    borderRadius: BUTTON_RADIUS,
+  buttonArea: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexGrow: 1,
+    marginBottom: 38,
+    position: 'relative',
+  },
+  glowCircle: {
+    position: 'absolute',
+    alignSelf: 'center',
+    top: '50%',
+    left: '50%',
+    width: 210,
+    height: 210,
+    borderRadius: 105,
+    marginLeft: -105,
+    marginTop: -105,
+    backgroundColor: '#ffd02b',
+    opacity: 0.21,
+    shadowColor: '#ffd02bba',
+    shadowRadius: 36,
+    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 0 },
+    zIndex: 0,
+  },
+  touchableButton: {
+    zIndex: 1,
+  },
+  buttonRing: {
+    width: 194,
+    height: 194,
+    borderRadius: 97,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
-    // CHANGE 2: Using a darker, more realistic drop shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 }, // Shadow is cast downwards
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 16, // For Android
+    padding: 2,
+    shadowColor: '#ffd02baa',
+    shadowOffset: { width: 0, height: 9 },
+    shadowOpacity: 0.17,
+    shadowRadius: 18,
+  },
+  buttonGlass: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    overflow: 'hidden',
+    backgroundColor: '#0a2836',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderColor: '#ffd02b39',
+    borderWidth: 0.8,
+    elevation: 10,
   },
   buttonGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: BUTTON_RADIUS,
-    justifyContent: 'center',
+    width: 168,
+    height: 168,
+    borderRadius: 84,
     alignItems: 'center',
-    padding: 3, // A smaller padding for a tighter bevel
-  },
-  buttonInner: {
-    width: '100%',
-    height: '100%',
-    borderRadius: BUTTON_RADIUS - 3,
     justifyContent: 'center',
-    alignItems: 'center',
-    // CHANGE 3: A bright top border to simulate light hitting the edge
-    borderWidth: 2,
-    borderColor: '#4a7a8a', // A lighter shade of the button's new BG
-    paddingHorizontal: 12,
-  },
-  iconDimmed: {
-    opacity: 0.8, // Slightly more visible icon
-    marginBottom: 4,
+    backgroundColor: '#0a2836',
   },
   buttonText: {
-    color: '#FFDE59',
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  description: {
-    color: '#ffffffcc',
-    fontSize: 15.5,
-    lineHeight: 22,
-    textAlign: 'center',
-    fontWeight: '500',
-    maxWidth: 280,
+    color: '#ffd02b',
+    fontSize: 25,
+    fontWeight: '900',
+    marginTop: 8,
+    letterSpacing: 1.1,
+    textShadowColor: '#00000044',
+    textShadowRadius: 4,
+    textTransform: 'uppercase',
+    fontFamily: Platform.select({
+      ios: 'System',
+      android: 'sans-serif-condensed',
+    }),
   },
 });
+
 
 export default IndexScreen;
