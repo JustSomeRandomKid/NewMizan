@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
+  Linking,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,12 +14,32 @@ import {
 import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
 import { db } from "../../firebaseConfig.js"; // Adjust the path if needed
 
+
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return (R * c).toFixed(2); // distance in km
+};
+
+const openInMaps = (lat, lon) => {
+  const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+  Linking.openURL(url);
+};
+
+
 const PlacesMap = () => {
   const [places, setPlaces] = useState([]);
   const [region, setRegion] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("hospital");
   const [loading, setLoading] = useState(false);
-  const [resources, setResources] = useState([]);
   const [selectedPlace, setSelectedPlace] = useState(null);
 
   useEffect(() => {
@@ -40,24 +62,6 @@ const PlacesMap = () => {
     getUserLocation();
   }, []);
 
-  useEffect(() => {
-    const fetchResources = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "Resources"));
-        const resourceList = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setResources(resourceList);
-      } catch (error) {
-        console.error("Error fetching resources:", error);
-        Alert.alert("Error", "Failed to load resources.");
-      }
-    };
-
-    fetchResources();
-  }, []);
-
   const fetchPlaces = async () => {
     setLoading(true);
     try {
@@ -68,7 +72,11 @@ const PlacesMap = () => {
           lat: parseFloat(data.latitude),
           lon: parseFloat(data.longitude),
           name: doc.id,
-          address: `Hospital: ${doc.id}`,
+          crimeTypes: data.crimeTypes || [],
+          image: data.image || "https://via.placeholder.com/400x200",
+          status: data.status || "Open",
+          closeTime: data.closeTime || "8:00 PM",
+          isNew: data.isNew || false,
         };
       });
 
@@ -91,12 +99,12 @@ const PlacesMap = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Resources in Your Area</Text>
+      {/* Header Pill */}
+      <View style={styles.headerPill}>
+        <Text style={styles.headerText}>Resources Near You</Text>
       </View>
 
-      {/* Hospital Button */}
+      {/* Category Button */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={() => handleCategorySelect("hospital")}>
           <Text style={styles.categoryButton}>🏥 Hospitals Nearby</Text>
@@ -117,10 +125,16 @@ const PlacesMap = () => {
               key={index}
               coordinate={{ latitude: place.lat, longitude: place.lon }}
               title={place.name}
-              onPress={() => setSelectedPlace(place)}
-              pinColor={
-                selectedCategory === "hospital" ? "red" : "green"
-              }
+              onPress={() => {
+                const distance = calculateDistance(
+                  region.latitude,
+                  region.longitude,
+                  place.lat,
+                  place.lon
+                );
+                setSelectedPlace({ ...place, distance });
+              }}
+              pinColor={selectedCategory === "hospital" ? "red" : "green"}
             />
           ))}
         </MapView>
@@ -128,14 +142,40 @@ const PlacesMap = () => {
         <Text>Loading map...</Text>
       )}
 
-      {/* Loading spinner */}
+      {/* Loading Spinner */}
       {loading && <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />}
 
-      {/* Floating info box for selected place */}
+      {/* Floating Card */}
       {selectedPlace && (
-        <View style={styles.floatingBox}>
-          <Text style={styles.resourceTitle}>{selectedPlace.name}</Text>
-          <Text style={styles.resourceLocation}>{selectedPlace.address}</Text>
+        <View style={styles.card}>
+          {selectedPlace.isNew && (
+            <View style={styles.newBadge}>
+              <Text style={styles.newBadgeText}>New</Text>
+            </View>
+          )}
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: selectedPlace.image }}
+              style={styles.cardImage}
+              resizeMode="cover"
+            />
+          </View>
+          <View style={styles.cardContent}>
+            <Text style={styles.resourceTitle}>{selectedPlace.name}</Text>
+            <Text style={styles.status}>
+              {selectedPlace.status} · Closes {selectedPlace.closeTime}
+            </Text>
+            <Text style={styles.distance}>
+              {selectedPlace.distance} km away
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => openInMaps(selectedPlace.lat, selectedPlace.lon)}
+            style={styles.mapsButton}
+          >
+            <Text style={styles.mapsButtonText}>Open in Maps</Text>
+          </TouchableOpacity>
+          
           <TouchableOpacity onPress={() => setSelectedPlace(null)} style={styles.closeButton}>
             <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>
@@ -149,20 +189,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  headerPill: {
     position: "absolute",
     top: 40,
-    left: 10,
-    right: 10,
-    padding: 10,
+    alignSelf: "center",
     backgroundColor: "#fff",
-    alignItems: "center",
-    borderRadius: 8,
-    zIndex: 2,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    zIndex: 10,
+    elevation: 3,
   },
   headerText: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "600",
   },
   buttonContainer: {
     position: "absolute",
@@ -189,37 +229,72 @@ const styles = StyleSheet.create({
     left: "50%",
     transform: [{ translateX: -25 }, { translateY: -25 }],
   },
-  floatingBox: {
+  card: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 20,
+    left: 20,
+    right: 20,
     backgroundColor: "#fff",
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    elevation: 10,
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 10,
+    elevation: 5,
     zIndex: 10,
   },
-  resourceTitle: {
-    fontWeight: "bold",
-    fontSize: 18,
+  imageContainer: {
+    width: "100%",
+    height: 150,
   },
-  resourceLocation: {
+  cardImage: {
+    width: "100%",
+    height: "100%",
+  },
+  cardContent: {
+    padding: 16,
+  },
+  resourceTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  status: {
+    color: "green",
+    fontWeight: "600",
     fontSize: 14,
-    color: "#555",
-    marginTop: 8,
+  },
+  distance: {
+    fontSize: 13,
+    color: "#999",
+    marginTop: 4,
   },
   closeButton: {
-    marginTop: 10,
-    alignSelf: "flex-end",
     backgroundColor: "#eee",
+    alignSelf: "flex-end",
+    margin: 10,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   closeButtonText: {
     color: "#007AFF",
+    fontWeight: "bold",
+  },
+  newBadge: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    backgroundColor: "green",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    zIndex: 15,
+  },
+  newBadgeText: {
+    color: "#fff",
+    fontSize: 12,
     fontWeight: "bold",
   },
 });
