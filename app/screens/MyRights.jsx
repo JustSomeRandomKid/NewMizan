@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Image,
   Linking,
   StyleSheet,
@@ -12,11 +13,12 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
-import { db } from "../../firebaseConfig.js"; // Adjust the path if needed
+import { db } from "../../firebaseConfig.js";
 
+const { width } = Dimensions.get("window");
 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; // Earth radius in km
+  const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
@@ -26,14 +28,13 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return (R * c).toFixed(2); // distance in km
+  return (R * c).toFixed(2);
 };
 
 const openInMaps = (lat, lon) => {
   const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
   Linking.openURL(url);
 };
-
 
 const PlacesMap = () => {
   const [places, setPlaces] = useState([]);
@@ -49,7 +50,6 @@ const PlacesMap = () => {
         Alert.alert("Permission denied", "Enable location services to use this feature.");
         return;
       }
-
       const location = await Location.getCurrentPositionAsync({});
       setRegion({
         latitude: location.coords.latitude,
@@ -58,7 +58,6 @@ const PlacesMap = () => {
         longitudeDelta: 0.05,
       });
     };
-
     getUserLocation();
   }, []);
 
@@ -79,7 +78,6 @@ const PlacesMap = () => {
           isNew: data.isNew || false,
         };
       });
-
       setPlaces(formattedPlaces);
       setSelectedPlace(null);
     } catch (error) {
@@ -99,19 +97,17 @@ const PlacesMap = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header Pill */}
       <View style={styles.headerPill}>
-        <Text style={styles.headerText}>Resources Near You</Text>
+        <Text style={styles.headerText}>Nearby Resources</Text>
       </View>
 
-      {/* Category Button */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={() => handleCategorySelect("hospital")}>
-          <Text style={styles.categoryButton}>🏥 Hospitals Nearby</Text>
+        <TouchableOpacity onPress={() => handleCategorySelect("hospital")}
+          style={styles.categoryButtonWrap}>
+          <Text style={styles.categoryButton}>🏥 Hospitals</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Map */}
       {region ? (
         <MapView
           style={styles.map}
@@ -134,18 +130,16 @@ const PlacesMap = () => {
                 );
                 setSelectedPlace({ ...place, distance });
               }}
-              pinColor={selectedCategory === "hospital" ? "red" : "green"}
+              pinColor="#ffd02b"
             />
           ))}
         </MapView>
       ) : (
-        <Text>Loading map...</Text>
+        <Text style={styles.loadingText}>Loading map...</Text>
       )}
 
-      {/* Loading Spinner */}
-      {loading && <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />}
+      {loading && <ActivityIndicator size="large" color="#ffd02b" style={styles.loader} />}
 
-      {/* Floating Card */}
       {selectedPlace && (
         <View style={styles.card}>
           {selectedPlace.isNew && (
@@ -153,32 +147,22 @@ const PlacesMap = () => {
               <Text style={styles.newBadgeText}>New</Text>
             </View>
           )}
-          <View style={styles.imageContainer}>
-            <Image
-              source={{ uri: selectedPlace.image }}
-              style={styles.cardImage}
-              resizeMode="cover"
-            />
-          </View>
+          {/*<Image source={{ uri: selectedPlace.image }} style={styles.cardImage} />*/}
+          <Image source={require('../../assets/images/hadassah_ek.jpg')} style={styles.cardImage}/>
           <View style={styles.cardContent}>
             <Text style={styles.resourceTitle}>{selectedPlace.name}</Text>
-            <Text style={styles.status}>
-              {selectedPlace.status} · Closes {selectedPlace.closeTime}
-            </Text>
-            <Text style={styles.distance}>
-              {selectedPlace.distance} km away
-            </Text>
+            <Text style={styles.status}>{selectedPlace.status} • Closes {selectedPlace.closeTime}</Text>
+            <Text style={styles.distance}>{selectedPlace.distance}km away</Text>
           </View>
-          <TouchableOpacity
-            onPress={() => openInMaps(selectedPlace.lat, selectedPlace.lon)}
-            style={styles.mapsButton}
-          >
-            <Text style={styles.mapsButtonText}>Open in Maps</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity onPress={() => setSelectedPlace(null)} style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
+
+          <View style={styles.actionsRow}>
+            <TouchableOpacity style={styles.mapsButton} onPress={() => openInMaps(selectedPlace.lat, selectedPlace.lon)}>
+              <Text style={styles.mapsButtonText}>Open in Maps</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setSelectedPlace(null)}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -188,40 +172,53 @@ const PlacesMap = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#100c24",
   },
   headerPill: {
     position: "absolute",
     top: 40,
     alignSelf: "center",
-    backgroundColor: "#fff",
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: "#ffd02b",
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 999,
     zIndex: 10,
     elevation: 3,
   },
   headerText: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#100c24",
   },
   buttonContainer: {
     position: "absolute",
     top: 100,
-    right: 10,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    zIndex: 3,
-    elevation: 3,
+    right: 20,
+    zIndex: 5,
+  },
+  categoryButtonWrap: {
+    backgroundColor: "#ffd02b",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
   },
   categoryButton: {
-    color: "#007AFF",
-    fontWeight: "bold",
+    color: "#100c24",
+    fontWeight: "600",
     fontSize: 14,
   },
   map: {
     flex: 1,
+  },
+  loadingText: {
+    color: "#fff",
+    alignSelf: "center",
+    marginTop: 20,
   },
   loader: {
     position: "absolute",
@@ -232,64 +229,76 @@ const styles = StyleSheet.create({
   card: {
     position: "absolute",
     bottom: 20,
-    left: 20,
-    right: 20,
-    backgroundColor: "#fff",
+    left: 16,
+    right: 16,
+    backgroundColor: "#1a162f",
     borderRadius: 16,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 10,
-    elevation: 5,
-    zIndex: 10,
-  },
-  imageContainer: {
-    width: "100%",
-    height: 150,
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 6,
   },
   cardImage: {
     width: "100%",
-    height: "100%",
+    height: 160,
   },
   cardContent: {
     padding: 16,
   },
   resourceTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 4,
+    color: "#ffd02b",
   },
   status: {
-    color: "green",
-    fontWeight: "600",
     fontSize: 14,
+    fontWeight: "600",
+    color: "#4caf50",
+    marginTop: 4,
   },
   distance: {
     fontSize: 13,
-    color: "#999",
-    marginTop: 4,
+    color: "#aaa",
+    marginTop: 6,
+  },
+  actionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  mapsButton: {
+    backgroundColor: "#ffd02b",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  mapsButtonText: {
+    color: "#100c24",
+    fontWeight: "bold",
   },
   closeButton: {
-    backgroundColor: "#eee",
-    alignSelf: "flex-end",
-    margin: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    backgroundColor: "transparent",
+    borderColor: "#ffd02b",
+    borderWidth: 1.5,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
   },
   closeButtonText: {
-    color: "#007AFF",
+    color: "#ffd02b",
     fontWeight: "bold",
   },
   newBadge: {
     position: "absolute",
     top: 10,
     left: 10,
-    backgroundColor: "green",
-    paddingHorizontal: 8,
+    backgroundColor: "#ff4081",
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 12,
     zIndex: 15,
   },
   newBadgeText: {
