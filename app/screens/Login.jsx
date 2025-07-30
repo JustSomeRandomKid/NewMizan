@@ -32,8 +32,8 @@ const LoginScreen = ({ navigation }) => {
       
       console.log("Login successful:", user);
 
-      Alert.alert("Login Successful", "Welcome back!");
-      navigation.navigate("Main");
+
+      
     } catch (error) {
       console.error("Login Error:", error);
       
@@ -69,7 +69,6 @@ const LoginScreen = ({ navigation }) => {
       <View style={styles.separator} />
       <Text style={styles.title}>Login</Text>
       
-      {/* Email input field */}
       <Controller
         control={control}
         name="email"
@@ -77,9 +76,8 @@ const LoginScreen = ({ navigation }) => {
           <TextInput style={styles.input} placeholder="Email" value={value} onChangeText={onChange} keyboardType="email-address" />
         )}
       />
-      {errors.email && <Text style={styles.error}>{errors.email.message}</Text>} {/* Email validation error */}
+      {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
       
-      {/* Password input field */}
       <Controller
         control={control}
         name="password"
@@ -87,14 +85,12 @@ const LoginScreen = ({ navigation }) => {
           <TextInput style={styles.input} placeholder="Password" value={value} onChangeText={onChange} secureTextEntry />
         )}
       />
-      {errors.password && <Text style={styles.error}>{errors.password.message}</Text>} {/* Password validation error */}
+      {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
       
-      {/* Login button */}
       <TouchableOpacity style={styles.button} onPress={handleSubmit(onSubmit)}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
       
-      {/* Link to navigate to the signup screen */}
       <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
         <Text style={styles.signupText}>Don't have an account? Sign Up</Text>
       </TouchableOpacity>
