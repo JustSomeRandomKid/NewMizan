@@ -5,10 +5,13 @@ import { addDoc, collection } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
   Alert,
+  FlatList,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -16,7 +19,8 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View
+  View,
+  keyExtractor
 } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 
@@ -67,7 +71,25 @@ const ReportCrime = ({ navigation }) => {
     }
   };
 
-  
+  const renderAttachments = ({ item, index }) => (
+    <View style={styles.noFilesContainer}>
+      <MaterialIcons
+        name= 'photo'
+        size={18}
+        color="#FFD93B"
+      />
+      <Text>{item.name}</Text>
+      <Pressable onPress={() => removeAttachment(index)}>
+      <MaterialIcons name="cancel" size={20} color="grey" />
+    </Pressable>
+    </View>
+  )
+
+        const removeAttachment = (indexToRemove) => {
+          setAttachments((prev) =>
+        prev.filter((_, index) => index !== indexToRemove)
+      );
+    };
 
 
   const handleAddLocation = async () => {
@@ -89,7 +111,6 @@ const ReportCrime = ({ navigation }) => {
       Alert.alert('Unable to open camera');
       return;
     }
-    setMediaModalVisible(false);
     const result = await ImagePicker.launchCameraAsync();
     if(!result.canceled) {
       const asset = result.assets[0];
@@ -104,7 +125,6 @@ const ReportCrime = ({ navigation }) => {
       Alert.alert('Unable to open gallery.');
       return;
     }
-    setMediaModalVisible(false);
     const result = await ImagePicker.launchImageLibraryAsync({ selectionLimit: 0});
     if (!result.canceled){
       const asset = result.assets[0];
@@ -322,7 +342,15 @@ const ReportCrime = ({ navigation }) => {
         <View style={styles.mediaModalOverlay}>
           <View style={styles.mediaModalContent}>
             {/* Add actual flatlist for displaying uploaded files*/}
-            <Text> Make this a flatlist for files</Text>
+            <FlatList 
+            data={attachments}
+            renderItem={renderAttachments}
+            keyExtractor={keyExtractor}
+            horizontal={false}
+            ListEmptyComponent={() => <View style={styles.noFilesContainer}><Image source={require('../../assets/images/case.png')} style={styles.noFilesIcon}/><Text> No files added</Text></View>}
+            ItemSeparatorComponent={() => <View style={{ height: 10 }} /> } 
+            
+            />
             <View style={styles.modalOptionButtons}>
               <TouchableOpacity style={[styles.optionButton, {marginRight: 20}]} onPress={handleOpenCamera} >
       <Text style={styles.optionText}>Camera</Text>
@@ -332,7 +360,7 @@ const ReportCrime = ({ navigation }) => {
     </TouchableOpacity>
     </View>
     <TouchableOpacity style={styles.cancelButton} onPress={()=> setMediaModalVisible(false)}>
-      <Text style={styles.cancelText}>Cancel</Text>
+      <Text style={styles.cancelText}>Done</Text>
     </TouchableOpacity>
           </View>
         </View>
@@ -652,7 +680,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',                   // horizontally center
   },
   mediaModalContent: {
-    width: '80%',               // box covers ~80% of screen width
+    width: '90%',               // box covers ~80% of screen width
     padding: 20,
     backgroundColor: '#FFF',    // white background for contrast
     borderRadius: 12,
@@ -734,7 +762,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   optionButton: {
-    width: 120,
+    width: 140,
     paddingVertical: 12,
     marginVertical: 4,
     backgroundColor: '#022D3A',
@@ -750,7 +778,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  noFilesIcon: {
+    height: 25,
+    width: 25
+  },
+  noFilesContainer: {
+    flexDirection: 'row'
   }
+
 });
 
 export default ReportCrime;
