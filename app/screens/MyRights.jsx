@@ -103,8 +103,16 @@ const PlacesMap = () => {
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={() => handleCategorySelect("hospital")}
-          style={styles.categoryButtonWrap}>
+          style={[styles.categoryButtonWrap, {backgroundColor: '#e26f6f'} ]}>
           <Text style={styles.categoryButton}>🏥 Hospitals</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.categoryButtonWrap, {backgroundColor: 'grey'} ]}>
+          <Text style={styles.categoryButton}>🏠 Shelters</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.categoryButtonWrap, {backgroundColor: '#2596be'} ]}>
+          <Text style={styles.categoryButton}>🛡️ Police</Text>
         </TouchableOpacity>
       </View>
 
@@ -191,12 +199,16 @@ const styles = StyleSheet.create({
     color: "#100c24",
   },
   buttonContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    flexDirection: 'row',
     position: "absolute",
     top: 100,
-    right: 20,
     zIndex: 5,
   },
   categoryButtonWrap: {
+    width:110,
     backgroundColor: "#ffd02b",
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -206,6 +218,8 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
+    marginLeft: 5,
+    marginRight: 5
   },
   categoryButton: {
     color: "#100c24",
