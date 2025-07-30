@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 16,
     right: 16,
-    backgroundColor: "#1a162f",
+    backgroundColor: "#0b2836",
     borderRadius: 16,
     overflow: "hidden",
     shadowColor: "#000",
