@@ -60,23 +60,19 @@ const IndexScreen = ({ navigation }) => {
           activeOpacity={0.9}
           style={styles.buttonWrapper}
         >
+          {/* The outer gradient now acts more like a subtle bevel */}
           <LinearGradient
             colors={['#ffd02b', '#ffde59']}
             style={styles.buttonGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <View style={styles.buttonAura} />
+            {/* The main button face is now lighter and has a top highlight */}
             <LinearGradient
-              colors={['#143c4a', '#0a2c38']}
+              colors={['#2a5a6a', '#1a4c5a']} // CHANGE 1: Lighter, more vibrant blue/teal gradient
               style={styles.buttonInner}
             >
-              <Ionicons
-                name="alert"
-                size={84}
-                color="#ffd02b"
-                style={styles.iconDimmed}
-              />
+              <Ionicons name="shield-checkmark-outline" size={48} color="#ffd02b" style={styles.iconDimmed} />
               <Text style={styles.buttonText}>Submit Report</Text>
             </LinearGradient>
           </LinearGradient>
@@ -139,7 +135,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: '#ffd02b',
     fontWeight: '600',
-    marginBottom: 32,
+    marginBottom: 40, // Increased margin
   },
   buttonWrapper: {
     width: BUTTON_SIZE,
@@ -147,13 +143,13 @@ const styles = StyleSheet.create({
     borderRadius: BUTTON_RADIUS,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 28,
-    shadowColor: '#ffd02b',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.55,
-    shadowRadius: 25,
-    elevation: 30,
-    position: 'relative',
+    marginBottom: 32,
+    // CHANGE 2: Using a darker, more realistic drop shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 }, // Shadow is cast downwards
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 16, // For Android
   },
   buttonGradient: {
     width: '100%',
@@ -161,36 +157,28 @@ const styles = StyleSheet.create({
     borderRadius: BUTTON_RADIUS,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 6,
-    overflow: 'visible',
-  },
-  buttonAura: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: BUTTON_RADIUS,
-    backgroundColor: '#ffd02b22',
-    zIndex: 0,
+    padding: 3, // A smaller padding for a tighter bevel
   },
   buttonInner: {
     width: '100%',
     height: '100%',
-    borderRadius: BUTTON_RADIUS - 4,
+    borderRadius: BUTTON_RADIUS - 3,
     justifyContent: 'center',
     alignItems: 'center',
+    // CHANGE 3: A bright top border to simulate light hitting the edge
     borderWidth: 2,
-    borderColor: '#ffd02b33',
-    zIndex: 1,
+    borderColor: '#4a7a8a', // A lighter shade of the button's new BG
     paddingHorizontal: 12,
-    paddingTop: 22, // pushes text higher
   },
   iconDimmed: {
-    opacity: 0.35,
-    marginBottom: 2, // less spacing below icon
+    opacity: 0.8, // Slightly more visible icon
+    marginBottom: 4,
   },
   buttonText: {
-    color: '#ffd02b',
-    fontSize: 24, // larger text
+    color: '#FFDE59',
+    fontSize: 22,
     fontWeight: 'bold',
-    marginTop: -8, // higher placement
+    textAlign: 'center',
   },
   description: {
     color: '#ffffffcc',
