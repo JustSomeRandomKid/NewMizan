@@ -36,16 +36,12 @@ const Navigation = () => {
   return (
     <Stack.Navigator 
       initialRouteName={user ? "Main" : "Signup"}
-      screenOptions={{ headerShown: true }}
+      screenOptions={{ headerShown: false }}
     >
       {user ? (
         // Screens for authenticated users
         <>
-          <Stack.Screen 
-            name="Main" 
-            component={MainContainer} 
-            options={{ headerShown: false }} 
-          />
+          <Stack.Screen name="Main" component={MainContainer}  />
           <Stack.Screen name="Messenger" component={messenger} />
           <Stack.Screen name="Report" component={ReportCrime} />
 
