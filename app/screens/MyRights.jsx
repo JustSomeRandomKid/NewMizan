@@ -36,10 +36,16 @@ const openInMaps = (lat, lon) => {
   Linking.openURL(url);
 };
 
+const CATEGORY_COLORS = {
+  hospital: '#e26f6f',
+  Shelter: 'grey',
+  LeagalAid: '#2596be',
+};
+
 const PlacesMap = () => {
   const [places, setPlaces] = useState([]);
   const [region, setRegion] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState("hospital");
+  const [selectedCategory, setSelectedCategory] = useState(selectedCategory);
   const [loading, setLoading] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState(null);
 
@@ -61,13 +67,13 @@ const PlacesMap = () => {
     getUserLocation();
   }, []);
 
-  const fetchPlaces = async () => {
+  const fetchPlaces = async (category) => {
     setLoading(true);
     try {
-      const snapshot = await getDocs(collection(db, "hospital"));
+      const snapshot = await getDocs(collection(db, category));
       const formattedPlaces = snapshot.docs.map((doc) => {
         const data = doc.data();
-        const loc = data.loc; // assumed to be GeoPoint or object with lat/lng
+        const loc = data.loc;
         return {
           name: doc.id,
           loc: {
@@ -79,23 +85,22 @@ const PlacesMap = () => {
           status: data.status || "Open",
           closeTime: data.closeTime || "8:00 PM",
           isNew: data.isNew || false,
+          category,
         };
       });
       setPlaces(formattedPlaces);
       setSelectedPlace(null);
     } catch (error) {
-      console.error("Error fetching hospital locations:", error);
-      Alert.alert("Error", "Failed to fetch hospital locations.");
+      console.error("Error fetching locations:", error);
+      Alert.alert("Error", `Failed to fetch ${category} locations.`);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCategorySelect = (category) => {
-    if (category === "hospital") {
-      setSelectedCategory(category);
-      fetchPlaces();
-    }
+    setSelectedCategory(category);
+    fetchPlaces(category);
   };
 
   return (
@@ -105,16 +110,31 @@ const PlacesMap = () => {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={() => handleCategorySelect("hospital")}
-          style={[styles.categoryButtonWrap, {backgroundColor: '#e26f6f'} ]}>
+        <TouchableOpacity
+          onPress={() => handleCategorySelect("hospital")}
+          style={[
+            styles.categoryButtonWrap,
+            { backgroundColor: CATEGORY_COLORS.hospital },
+          ]}
+        >
           <Text style={styles.categoryButton}>Hospitals</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.categoryButtonWrap, {backgroundColor: 'grey'} ]}>
+          onPress={() => handleCategorySelect("Shelter")}
+          style={[
+            styles.categoryButtonWrap,
+            { backgroundColor: CATEGORY_COLORS.Shelter },
+          ]}
+        >
           <Text style={styles.categoryButton}>Shelters</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.categoryButtonWrap, {backgroundColor: '#2596be'} ]}>
+          onPress={() => handleCategorySelect("Leagal Aid")}
+          style={[
+            styles.categoryButtonWrap,
+            { backgroundColor: CATEGORY_COLORS.LeagalAid },
+          ]}
+        >
           <Text style={styles.categoryButton}>Police</Text>
         </TouchableOpacity>
       </View>
@@ -130,10 +150,7 @@ const PlacesMap = () => {
           {places.map((place, index) => (
             <Marker
               key={index}
-              coordinate={{
-                latitude: place.loc.latitude,
-                longitude: place.loc.longitude,
-              }}
+              coordinate={place.loc}
               title={place.name}
               onPress={() => {
                 const distance = calculateDistance(
@@ -144,7 +161,7 @@ const PlacesMap = () => {
                 );
                 setSelectedPlace({ ...place, distance });
               }}
-              pinColor="#ffd02b"
+              pinColor={CATEGORY_COLORS[place.category]}
             />
           ))}
         </MapView>
@@ -214,7 +231,6 @@ const styles = StyleSheet.create({
   },
   categoryButtonWrap: {
     width:110,
-    backgroundColor: "#ffd02b",
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
