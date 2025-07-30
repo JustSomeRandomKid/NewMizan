@@ -5,42 +5,38 @@ import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } fro
 import * as yup from "yup";
 import { auth } from '../../firebaseConfig.js';
 
-// Validation schema for login form fields
 const schema = yup.object().shape({
   email: yup.string().email("Invalid email").required("Email is required"),
   password: yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
 });
 
 const LoginScreen = ({ navigation }) => {
-  // Destructuring hook form methods and state
+ 
   const { control, handleSubmit, formState: { errors } } = useForm({
-    resolver: yupResolver(schema), // Using Yup for form validation
+    resolver: yupResolver(schema), 
   });
 
-  // Handles form submission and login process
+  
   const onSubmit = async (data) => {
     try {
       console.log("Logging in with:", data);
 
-      // Sign out any existing user first (optional - similar to deleting sessions in Appwrite)
+      
       if (auth.currentUser) {
         await signOut(auth);
         console.log("Signed out existing user, proceeding to login...");
       }
 
-      // Sign in with email and password using Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       const user = userCredential.user;
       
       console.log("Login successful:", user);
 
-      // Alert the user and navigate to the main screen after successful login
-      Alert.alert("Login Successful", "Welcome back!");
-      navigation.navigate("Main");
+
+      
     } catch (error) {
       console.error("Login Error:", error);
       
-      // Handle specific Firebase Auth errors
       let errorMessage = "Login failed. Please try again.";
       
       switch (error.code) {
@@ -73,7 +69,6 @@ const LoginScreen = ({ navigation }) => {
       <View style={styles.separator} />
       <Text style={styles.title}>Login</Text>
       
-      {/* Email input field */}
       <Controller
         control={control}
         name="email"
@@ -81,9 +76,8 @@ const LoginScreen = ({ navigation }) => {
           <TextInput style={styles.input} placeholder="Email" value={value} onChangeText={onChange} keyboardType="email-address" />
         )}
       />
-      {errors.email && <Text style={styles.error}>{errors.email.message}</Text>} {/* Email validation error */}
+      {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
       
-      {/* Password input field */}
       <Controller
         control={control}
         name="password"
@@ -91,14 +85,12 @@ const LoginScreen = ({ navigation }) => {
           <TextInput style={styles.input} placeholder="Password" value={value} onChangeText={onChange} secureTextEntry />
         )}
       />
-      {errors.password && <Text style={styles.error}>{errors.password.message}</Text>} {/* Password validation error */}
+      {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
       
-      {/* Login button */}
       <TouchableOpacity style={styles.button} onPress={handleSubmit(onSubmit)}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
       
-      {/* Link to navigate to the signup screen */}
       <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
         <Text style={styles.signupText}>Don't have an account? Sign Up</Text>
       </TouchableOpacity>
@@ -111,7 +103,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#04445F",
+    backgroundColor: "#0b2836",
     padding: 20,
   },
   logo: {
