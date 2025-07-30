@@ -27,7 +27,6 @@ const ReportCrime = ({ navigation }) => {
   const [victimID, setVictimID] = useState('');
   const [location, setLocation] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
   const crimeOptions = [
     'Domestic Violence',
     'Sexual Harassment / Assault',
@@ -37,6 +36,8 @@ const ReportCrime = ({ navigation }) => {
     'Violent Crime',
     'Other',
   ];
+  const [isLocationModalVisible, setLocationModalVisible] = useState(false);
+  const [addressInput, setAddressInput] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [isMediaModalVisible, setMediaModalVisible] = useState(false);
 
@@ -267,7 +268,7 @@ const ReportCrime = ({ navigation }) => {
                 styles.locationButton,
                 !!location && { backgroundColor: '#FFD93B' },
               ]}
-              onPress={handleAddLocation}
+              onPress={() => setLocationModalVisible(true)}
               activeOpacity={0.85}
             >
               <MaterialIcons
@@ -336,6 +337,90 @@ const ReportCrime = ({ navigation }) => {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        visible={isLocationModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLocationModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              onPress={() => {
+                setLocationModalVisible(false);
+                setAddressInput('');
+              }}
+              style={{
+                position: 'absolute',
+                top: 10,
+                right: 10,
+                zIndex: 1,
+                padding: 5,
+              }}
+            >
+              <Text style={{ fontSize: 18, color: '#444' }}>✖</Text>
+            </TouchableOpacity>
+
+
+            <Text style={styles.modalTitle}>Choose Location Method</Text>
+            <TouchableOpacity
+              style={[styles.optionButton, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}
+              onPress={async () => {
+                setLocationModalVisible(false);
+                try {
+                  const { status } = await Location.requestForegroundPermissionsAsync();
+                  if (status !== 'granted') {
+                    Alert.alert('Permission Denied', 'Location permission is required.');
+                    return;
+                  }
+                  const currentLocation = await Location.getCurrentPositionAsync({});
+                  setLocation(currentLocation.coords);
+                } catch (error) {
+                  Alert.alert('Error', 'Failed to get current location.');
+                }
+              }}
+            >
+              <Text style={styles.optionButtonText}>My Location</Text>
+            </TouchableOpacity>
+
+            <TextInput
+              placeholder="Enter address"
+              placeholderTextColor="#888"
+              style={styles.addressInput}
+              value={addressInput}
+              onChangeText={setAddressInput}
+            />
+
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={async () => {
+                if (!addressInput.trim()) {
+                  Alert.alert('Please enter an address.');
+                  return;
+                }
+                try {
+                  const results = await Location.geocodeAsync(addressInput);
+                  if (results.length > 0) {
+                    const coords = results[0];
+                    setLocation({ latitude: coords.latitude, longitude: coords.longitude });
+                    setLocationModalVisible(false);
+                    setAddressInput('');
+                  } else {
+                    Alert.alert('Address not found.');
+                  }
+                } catch (error) {
+                  Alert.alert('Error', 'Failed to geocode address.');
+                }
+              }}
+            >
+              <Text style={styles.submitButtonText}>submit</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+
     </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -573,6 +658,81 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'stretch',      // children take full width
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '90%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#00465B',
+  },
+  optionButton: {
+    width: '100%',
+    backgroundColor: '#007B8A',
+    paddingVertical: 50,
+    borderRadius: 100,
+    marginBottom: 100,
+    alignItems: 'center',
+  },
+  optionButtonText: {
+    color: '#FFD93B',
+    fontSize: 16,
+    fontWeight: '600',
+    alignItems: 'center',
+
+  },
+  addressInput: {
+    width: '100%',
+    backgroundColor: '#F0F0F0',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: '#000',
+    marginBottom: 15,
+  },
+  submitButton: {
+    width: '100%',
+    backgroundColor: '#00465B',
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    color: '#FFD93B',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#ccc',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+  },
   optionButton: {
     width: 120,
     paddingVertical: 12,
@@ -583,18 +743,6 @@ const styles = StyleSheet.create({
   },
   optionText: {
     color: '#FFD93B',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cancelButton: {
-    paddingVertical: 12,
-    marginTop: 10,
-    backgroundColor: '#DDD',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelText: {
-    color: '#333',
     fontSize: 16,
     fontWeight: '600',
   },
