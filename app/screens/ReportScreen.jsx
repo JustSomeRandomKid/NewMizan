@@ -5,13 +5,17 @@ import { addDoc, collection } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
   Alert,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
   Platform,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View
 } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
@@ -139,11 +143,19 @@ const ReportCrime = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.screen}>
-      <ScrollView
-        contentContainerStyle={styles.outer}
-        keyboardShouldPersistTaps="handled"
+     <SafeAreaView style={{ flex: 1, backgroundColor: '#022D3A' }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={{ flex: 1 }}>
+            <ScrollView
+              contentContainerStyle={styles.outer}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
         <View style={styles.headerWrap}>
           <View style={styles.iconCircle}>
             <FontAwesome5 name="shield-alt" size={28} color="#FFD93B" />
@@ -274,11 +286,11 @@ const ReportCrime = ({ navigation }) => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.attachmentsButton} onPress={() => setMediaModalVisible(true)}>
-                          <MaterialIcons name="upload"
-            size={18}
-            color='#FFD93B'
-            style={{ marginRight: 8 }} 
-            />
+              <MaterialIcons name="upload"
+              size={18}
+              color='#FFD93B'
+              style={{ marginRight: 8 }} 
+              />
                 <Text style={styles.attachmentsButtonText}>Add Files</Text>
             </TouchableOpacity>
           </View>
@@ -325,6 +337,9 @@ const ReportCrime = ({ navigation }) => {
         </View>
       </Modal>
     </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
