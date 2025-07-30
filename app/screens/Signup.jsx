@@ -1,5 +1,5 @@
 import { yupResolver } from "@hookform/resolvers/yup";
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -42,8 +42,8 @@ const SignupScreen = ({ navigation }) => {
       });
 
       console.log("Signup successful:", user);
-      Alert.alert("Signup Successful", "You can now log in!");
-      navigation.navigate("Login");
+      signInWithEmailAndPassword(auth, data.email, data.password)
+      navigation.navigate("Main");
     } catch (error) {
       console.error("Signup Error:", error);
       

@@ -1,24 +1,46 @@
-import axios from "axios";
 import * as Location from "expo-location";
 import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
+  Image,
+  Linking,
   StyleSheet,
   Text,
-  View
+  TouchableOpacity,
+  View,
 } from "react-native";
 import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
 import { db } from "../../firebaseConfig.js"; // Adjust the path if needed
 
+
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return (R * c).toFixed(2); // distance in km
+};
+
+const openInMaps = (lat, lon) => {
+  const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+  Linking.openURL(url);
+};
+
+
 const PlacesMap = () => {
   const [places, setPlaces] = useState([]);
   const [region, setRegion] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState("police");
+  const [selectedCategory, setSelectedCategory] = useState("hospital");
   const [loading, setLoading] = useState(false);
-  const [resources, setResources] = useState([]);
+  const [selectedPlace, setSelectedPlace] = useState(null);
 
   useEffect(() => {
     const getUserLocation = async () => {
@@ -40,58 +62,56 @@ const PlacesMap = () => {
     getUserLocation();
   }, []);
 
-  useEffect(() => {
-    const fetchResources = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "Resources"));
-        const resourceList = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setResources(resourceList);
-      } catch (error) {
-        console.error("Error fetching resources:", error);
-        Alert.alert("Error", "Failed to load resources.");
-      }
-    };
-
-    fetchResources();
-  }, []);
-
-  const fetchPlaces = async (category) => {
+  const fetchPlaces = async () => {
     setLoading(true);
     try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${category}&format=json&countrycodes=IL&limit=50`;
-      const response = await axios.get(url);
-      const allResults = response.data;
-
-      const formattedPlaces = allResults.map((place) => ({
-        lat: parseFloat(place.lat),
-        lon: parseFloat(place.lon),
-        name: place.display_name.split(",")[0],
-        address: place.display_name,
-      }));
+      const snapshot = await getDocs(collection(db, "hospital"));
+      const formattedPlaces = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          lat: parseFloat(data.latitude),
+          lon: parseFloat(data.longitude),
+          name: doc.id,
+          crimeTypes: data.crimeTypes || [],
+          image: data.image || "https://via.placeholder.com/400x200",
+          status: data.status || "Open",
+          closeTime: data.closeTime || "8:00 PM",
+          isNew: data.isNew || false,
+        };
+      });
 
       setPlaces(formattedPlaces);
+      setSelectedPlace(null);
     } catch (error) {
-      console.error("Error fetching locations:", error);
-      Alert.alert("Error", "Failed to fetch locations. Please try again.");
+      console.error("Error fetching hospital locations:", error);
+      Alert.alert("Error", "Failed to fetch hospital locations.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
-    fetchPlaces(category);
+    if (category === "hospital") {
+      setSelectedCategory(category);
+      fetchPlaces();
+    }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Resources in Your Area</Text>
+      {/* Header Pill */}
+      <View style={styles.headerPill}>
+        <Text style={styles.headerText}>Resources Near You</Text>
       </View>
 
+      {/* Category Button */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity onPress={() => handleCategorySelect("hospital")}>
+          <Text style={styles.categoryButton}>🏥 Hospitals Nearby</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Map */}
       {region ? (
         <MapView
           style={styles.map}
@@ -105,13 +125,16 @@ const PlacesMap = () => {
               key={index}
               coordinate={{ latitude: place.lat, longitude: place.lon }}
               title={place.name}
-              pinColor={
-                selectedCategory === "police"
-                  ? "blue"
-                  : selectedCategory === "hospital"
-                  ? "red"
-                  : "green"
-              }
+              onPress={() => {
+                const distance = calculateDistance(
+                  region.latitude,
+                  region.longitude,
+                  place.lat,
+                  place.lon
+                );
+                setSelectedPlace({ ...place, distance });
+              }}
+              pinColor={selectedCategory === "hospital" ? "red" : "green"}
             />
           ))}
         </MapView>
@@ -119,30 +142,45 @@ const PlacesMap = () => {
         <Text>Loading map...</Text>
       )}
 
+      {/* Loading Spinner */}
       {loading && <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />}
 
-      {/* Scrollable Resources List */}
-      <View style={styles.resourcesContainer}>
-        <FlatList
-          data={resources}
-          horizontal
-          keyExtractor={(item) => item.id}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 10 }}
-          renderItem={({ item }) => (
-            <View style={styles.resourceCard}>
-              <Text style={styles.resourceTitle}>{item.name}</Text>
-              <Text style={styles.resourceType}>Type: {item.type}</Text>
-              <Text style={styles.resourceLocation}>Location: {item.location}</Text>
-              <Text style={styles.resourceHours}>Hours: {item.hours}</Text>
-              {item.description ? (
-                <Text style={styles.resourceDescription}>{item.description}</Text>
-              ) : null}
+      {/* Floating Card */}
+      {selectedPlace && (
+        <View style={styles.card}>
+          {selectedPlace.isNew && (
+            <View style={styles.newBadge}>
+              <Text style={styles.newBadgeText}>New</Text>
             </View>
           )}
-        />
-      </View>
-
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: selectedPlace.image }}
+              style={styles.cardImage}
+              resizeMode="cover"
+            />
+          </View>
+          <View style={styles.cardContent}>
+            <Text style={styles.resourceTitle}>{selectedPlace.name}</Text>
+            <Text style={styles.status}>
+              {selectedPlace.status} · Closes {selectedPlace.closeTime}
+            </Text>
+            <Text style={styles.distance}>
+              {selectedPlace.distance} km away
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => openInMaps(selectedPlace.lat, selectedPlace.lon)}
+            style={styles.mapsButton}
+          >
+            <Text style={styles.mapsButtonText}>Open in Maps</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity onPress={() => setSelectedPlace(null)} style={styles.closeButton}>
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -151,20 +189,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  headerPill: {
     position: "absolute",
     top: 40,
-    left: 10,
-    right: 10,
-    padding: 10,
+    alignSelf: "center",
     backgroundColor: "#fff",
-    alignItems: "center",
-    borderRadius: 8,
-    zIndex: 2,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    zIndex: 10,
+    elevation: 3,
   },
   headerText: {
-    fontSize: 20,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  buttonContainer: {
+    position: "absolute",
+    top: 100,
+    right: 10,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    zIndex: 3,
+    elevation: 3,
+  },
+  categoryButton: {
+    color: "#007AFF",
     fontWeight: "bold",
+    fontSize: 14,
   },
   map: {
     flex: 1,
@@ -175,59 +229,73 @@ const styles = StyleSheet.create({
     left: "50%",
     transform: [{ translateX: -25 }, { translateY: -25 }],
   },
-  resourcesContainer: {
-    position: "absolute",
-    bottom: 80,
-    left: 0,
-    right: 0,
-    paddingVertical: 10,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    zIndex: 2,
-  },
-  resourceCard: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 10,
-    marginHorizontal: 8,
-    minWidth: 200,
-    elevation: 3,
-  },
-  resourceTitle: {
-    fontWeight: "bold",
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  resourceType: {
-    fontSize: 14,
-    color: "#333",
-  },
-  resourceLocation: {
-    fontSize: 13,
-    color: "#444",
-  },
-  resourceHours: {
-    fontSize: 13,
-    color: "#666",
-    fontStyle: "italic",
-  },
-  resourceDescription: {
-    fontSize: 12,
-    color: "#555",
-    marginTop: 4,
-  },
-  directoryContainer: {
+  card: {
     position: "absolute",
     bottom: 20,
-    right: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    padding: 10,
-    borderRadius: 8,
-    zIndex: 2,
+    left: 20,
+    right: 20,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 10,
+    elevation: 5,
+    zIndex: 10,
   },
-  directoryText: {
-    fontSize: 16,
-    marginVertical: 5,
-    textAlign: "center",
+  imageContainer: {
+    width: "100%",
+    height: 150,
+  },
+  cardImage: {
+    width: "100%",
+    height: "100%",
+  },
+  cardContent: {
+    padding: 16,
+  },
+  resourceTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  status: {
+    color: "green",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  distance: {
+    fontSize: 13,
+    color: "#999",
+    marginTop: 4,
+  },
+  closeButton: {
+    backgroundColor: "#eee",
+    alignSelf: "flex-end",
+    margin: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  closeButtonText: {
+    color: "#007AFF",
+    fontWeight: "bold",
+  },
+  newBadge: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    backgroundColor: "green",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    zIndex: 15,
+  },
+  newBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });
 
