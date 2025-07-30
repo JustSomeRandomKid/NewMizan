@@ -1,15 +1,15 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Image, StyleSheet } from 'react-native'; // Import StyleSheet for styling components
+import { Image, StyleSheet } from 'react-native';
 import IndexScreen from './screens/index';
 import Messenger from './screens/Messenger';
 import MyCases from './screens/MyCases';
 import MyRights from './screens/MyRights';
 import Organizations from './screens/Organizations';
 
-// Create a Bottom Tab Navigator instance
+
 const Tab = createBottomTabNavigator();
 
-// Define styles for the tab icons
+
 const styles = StyleSheet.create({
   icon: {
     width: 25,
@@ -21,14 +21,14 @@ const styles = StyleSheet.create({
 function MainContainer() {
   return (
     <Tab.Navigator
-      initialRouteName="Home" // Set the initial screen when the app loads
+      initialRouteName="Home" 
       screenOptions={({ route }) => ({
         headerShown: false,
-        // Define the tab bar icon for each screen
+        
         tabBarIcon: ({ focused, color, size }) => {
           let iconSource;
 
-          // Set icons based on the route name and whether the tab is focused
+          
           if (route.name === 'Home') {
             iconSource = focused 
               ? require('../assets/images/Figma/Vector-1.png') // Active state icon for Home
@@ -51,7 +51,7 @@ function MainContainer() {
               : require('../assets/images/Figma/message.png'); // Inactive state icon for My Cases
           }
 
-          // Render the icon using the selected icon source
+          
           return <Image source={iconSource} style={styles.icon} />;
         },
         // Customizing the appearance of the tab bar
