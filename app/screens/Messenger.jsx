@@ -375,7 +375,8 @@ const Messenger = () => {
                         <View style={styles.centeredView}>
                             <View style={styles.modalView}>
                                 <Text style={styles.modalCaseTitle}>{selectedCase?.crime}</Text>
-                                <Text style={styles.modalCaseDetail}>Reported by: { getDocs(collection(db,'users'),selectedCase?.victimID).name}</Text>
+                                <Text style={styles.modalCaseDetail}>Reported by: { getDocs(collection(db,'users'), selectedCase?.victimID).name}</Text>
+                                <Text style={styles.modalCaseDetail}>Date: {selectedCase?.date}</Text>
                                 <Text style={styles.modalCaseDetail}>Description: {selectedCase?.description}</Text>
                                 {/* Add more case details here as needed */}
                                 <TouchableOpacity
@@ -431,7 +432,7 @@ const Messenger = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#0A2836' // Dark Blue
+        backgroundColor: '#112b3c' // Dark Blue
     },
     ngoListWrapper: {
         flex: 1,
@@ -502,7 +503,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: '#0A2836', // Dark Blue
+        backgroundColor: '#0a2c38', // Dark Blue
         borderBottomWidth: 1,
         borderBottomColor: '#374151',
     },
@@ -528,7 +529,7 @@ const styles = StyleSheet.create({
     },
     chatWrapper: {
         flex: 1,
-        backgroundColor: '#F0F4F8', // Lighter shade for chat background
+        backgroundColor: '#0a2c38',
     },
     chatContainer: {
         padding: 16,
@@ -552,12 +553,12 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     currentUserMessage: {
-        backgroundColor: '#FFD700', // Yellow
+        backgroundColor: '#FFFFFF', // Yellow
         alignSelf: 'flex-end',
         marginLeft: '20%',
     },
     otherUserMessage: {
-        backgroundColor: '#FFFFFF', // White
+        backgroundColor: '#FFD700', // White
         alignSelf: 'flex-start',
         marginRight: '20%',
     },

@@ -210,9 +210,6 @@ const OrganizationCarouselPage = ({ navigation }) => {
             <View style={styles.modalContent}>
               <Image source={selectedOrg.logo} style={styles.logoSmall} />
               <Text style={styles.modalTitle}>{selectedOrg.name}</Text>
-              <Text style={styles.modalDescription}>
-                {selectedOrg.description}
-              </Text>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setSelectedOrg(null)}
