@@ -6,6 +6,7 @@ import { auth } from '../firebaseConfig.js';
 import MainContainer from './MainContainer';
 import LoginScreen from './screens/Login';
 import messenger from './screens/Messenger';
+import MyCases from './screens/MyCases.jsx';
 import ReportCrime from './screens/ReportScreen';
 import SignupScreen from './screens/Signup';
 
@@ -44,7 +45,7 @@ const Navigation = () => {
           <Stack.Screen name="Main" component={MainContainer}  />
           <Stack.Screen name="Messenger" component={messenger} />
           <Stack.Screen name="Report" component={ReportCrime} />
-
+          <Stack.Screen name="MyCases" component={MyCases} />
         </>
       ) : (
         

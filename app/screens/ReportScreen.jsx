@@ -9,6 +9,7 @@ import {
   Image,
   Keyboard,
   KeyboardAvoidingView,
+  keyExtractor,
   Modal,
   Platform,
   Pressable,
@@ -19,8 +20,7 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
-  keyExtractor
+  View
 } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 
@@ -152,7 +152,7 @@ const ReportCrime = ({ navigation }) => {
         status: 'pending',
       });
       Alert.alert('Success', 'Crime reported successfully!');
-
+      navigation.navigate('MyCases');
       setCrime('');
       setDescription('');
       setDate(getTodayDate()); 
@@ -161,6 +161,7 @@ const ReportCrime = ({ navigation }) => {
     } catch (error) {
       Alert.alert('Error', 'Failed to report crime. Please try again.');
     }
+
   };
 
   return (

@@ -64,7 +64,7 @@ function MainContainer() {
       <Tab.Screen name="Home" component={IndexScreen} />
       <Tab.Screen name="NGOs" component={Organizations} />
       <Tab.Screen name="Resources" component={MyRights} />
-      <Tab.Screen name="My Cases" component={MyCases} />
+      <Tab.Screen name="MyCases" component={MyCases} />
       <Tab.Screen name ="Messenger" component={Messenger} />
       
     </Tab.Navigator>
