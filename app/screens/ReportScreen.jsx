@@ -20,6 +20,7 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  Vibration,
   View
 } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
@@ -151,7 +152,7 @@ const ReportCrime = ({ navigation }) => {
         createdAt: new Date(),
         status: 'pending',
       });
-      Alert.alert('Success', 'Crime reported successfully!');
+      Vibration.vibrate();
       navigation.navigate('MyCases');
       setCrime('');
       setDescription('');
@@ -166,6 +167,15 @@ const ReportCrime = ({ navigation }) => {
 
   return (
      <SafeAreaView style={{ flex: 1, backgroundColor: '#022D3A' }}>
+      <View>
+        <TouchableOpacity onPress={navigation.navigate("Home")} style={styles.backButton}>
+          <MaterialIcons
+          name="arrow-back"
+          size={40}
+          color="grey"
+          />
+        </TouchableOpacity>
+      </View>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -799,6 +809,12 @@ const styles = StyleSheet.create({
   },
   noFilesContainer: {
     flexDirection: 'row'
+  },
+  backButton: {
+    position: 'absolute',
+    marginTop: 30,
+    marginLeft: 20,
+    borderRadius: 20
   }
 
 });

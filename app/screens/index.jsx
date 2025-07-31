@@ -156,17 +156,6 @@ const IndexScreen = ({ navigation }) => {
   >
     <BlurView intensity={65} tint="dark" style={styles.buttonGlass}>
       <View style={styles.buttonGradient}>
-        <Ionicons
-          name="shield-outline"
-          size={76}
-          color="#"
-          style={{
-            opacity: 0.65,
-            textShadowColor: '#ffd02b',
-            textShadowRadius: 13,
-            textShadowOffset: { width: 0, height: 2 },
-          }}
-        />
         <Text style={styles.buttonText}>REPORT</Text>
       </View>
     </BlurView>
@@ -336,7 +325,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#ffd02b',
-    fontSize: 25,
+    fontSize: 35,
     fontWeight: '900',
     marginTop: 8,
     letterSpacing: 1.1,
