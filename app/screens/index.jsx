@@ -5,6 +5,7 @@ import { signOut } from 'firebase/auth';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Easing,
   Platform,
   StatusBar,
   StyleSheet,
@@ -46,22 +47,7 @@ const IndexScreen = ({ navigation }) => {
 
 
   const handleReport = () => {
-    // bounce animation
-    Animated.sequence([
-      Animated.spring(bounceAnim, {
-        toValue: 1.06,
-        friction: 3,
-        tension: 60,
-        useNativeDriver: true,
-      }),
-      Animated.spring(bounceAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-      }),
-    ]).start();
 
-
-    // navigate immediately on single tap
     navigation.navigate('Report');
   };
 
@@ -148,13 +134,18 @@ const IndexScreen = ({ navigation }) => {
     }).start();
   }}
   onPressOut={() => {
-    Animated.spring(bounceAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 20,
-      bounciness: 6,
-    }).start(() => handleReport());
-  }}
+  Animated.timing(bounceAnim, {
+    toValue: 1,
+    duration: 150,
+    easing: Easing.out(Easing.quad),
+    useNativeDriver: true,
+  }).start(({ finished }) => {
+    if (finished) {
+      navigation.navigate('Report');
+    }
+  });
+}}
+
   style={styles.touchableButton}
 >
   <LinearGradient
@@ -166,12 +157,12 @@ const IndexScreen = ({ navigation }) => {
     <BlurView intensity={65} tint="dark" style={styles.buttonGlass}>
       <View style={styles.buttonGradient}>
         <Ionicons
-          name="document-text-outline"
+          name="shield-outline"
           size={76}
-          color="#fff"
+          color="#"
           style={{
             opacity: 0.65,
-            textShadowColor: '#ffd02baa',
+            textShadowColor: '#ffd02b',
             textShadowRadius: 13,
             textShadowOffset: { width: 0, height: 2 },
           }}
